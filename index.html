@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E9EE">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="家事メモ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>家事メモ</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&amp;family=Zen+Maru+Gothic:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: a desk with an index-card box. Divider tabs on top, ruled cards below, one red button to write a new card. Recipes reuse the cards, with numbered steps. */
+  --desk: #E4E9EE;
+  --tab: #D2D9E1;
+  --card: #FFFFFF;
+  --field: #F6F8FA;
+  --ink: #1E2833;
+  --ink-soft: #566271;
+  --rule: #D7E4F1;
+  --line: #C6D0DA;
+  --accent: #C23F38;
+  --accent-ink: #FFFFFF;
+  --c0: #2D6BAA;
+  --c1: #B4531C;
+  --c2: #23774A;
+  --c3: #5F6384;
+  --c4: #8C6A0E;
+  --c5: #844B98;
+  --shadow: 0 1px 2px rgba(30, 40, 51, .08), 0 6px 18px rgba(30, 40, 51, .07);
+  --font-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #12171D;
+    --tab: #1F2730;
+    --card: #1B222A;
+    --field: #141A20;
+    --ink: #E6EBF0;
+    --ink-soft: #9AA6B3;
+    --rule: #28333F;
+    --line: #34404D;
+    --accent: #E0645A;
+    --accent-ink: #1A0E0D;
+    --c0: #7DB3EA;
+    --c1: #F0985F;
+    --c2: #63C892;
+    --c3: #A9ADCB;
+    --c4: #E2C055;
+    --c5: #C792DA;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #12171D;
+  --tab: #1F2730;
+  --card: #1B222A;
+  --field: #141A20;
+  --ink: #E6EBF0;
+  --ink-soft: #9AA6B3;
+  --rule: #28333F;
+  --line: #34404D;
+  --accent: #E0645A;
+  --accent-ink: #1A0E0D;
+  --c0: #7DB3EA;
+  --c1: #F0985F;
+  --c2: #63C892;
+  --c3: #A9ADCB;
+  --c4: #E2C055;
+  --c5: #C792DA;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+body.locked { overflow: hidden; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--c0); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.top h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: .06em;
+  text-wrap: balance;
+}
+.top .sub { margin: 4px 0 0; color: var(--ink-soft); font-size: 15px; }
+.count {
+  margin: 0;
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.count b { font-size: 24px; color: var(--ink); margin-right: 2px; }
+
+/* View switch: コツ / レシピ */
+.views {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--tab);
+}
+.view-btn {
+  min-height: 46px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.view-btn .n { font-family: var(--font-body); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.view-btn[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+
+/* Search */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  min-height: 48px;
+}
+.search svg { flex: none; color: var(--ink-soft); }
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 17px;
+  outline: none;
+}
+.search:focus-within { border-color: var(--c0); }
+
+/* Divider tabs */
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 2px solid var(--line);
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 8px 14px 6px;
+  border: 0;
+  border-top: 4px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background: var(--tab);
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.tab .n {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--desk);
+  text-align: center;
+}
+.tab.is-on { background: var(--card); color: var(--ink); border-top-color: var(--cat); }
+.tab-edit { background: transparent; border: 1.5px dashed var(--line); border-bottom: 0; color: var(--ink-soft); font-weight: 500; }
+
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: -4px; }
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--c0);
+  background: transparent;
+  color: var(--c0);
+  font-size: 15px;
+  font-weight: 700;
+}
+.toggle[aria-pressed="true"] { background: var(--c0); color: var(--card); }
+
+/* Status banner */
+.status {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border-left: 4px solid var(--c4);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* Cards */
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.note {
+  --cat: var(--c3);
+  position: relative;
+  background: var(--card);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 14px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.note-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chip {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cat);
+  color: var(--cat);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.date { color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pin {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: 0;
+  background: transparent;
+  color: var(--line);
+  border-radius: 8px;
+}
+.pin[aria-pressed="true"] { color: var(--accent); }
+.pin:disabled { cursor: default; }
+.note-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.45;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--cat);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.ruled, .note-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 28px;
+  background-image: linear-gradient(to bottom, transparent 27px, var(--rule) 27px);
+  background-size: 100% 28px;
+}
+.note-body { min-height: 56px; margin-top: 2px; }
+.note-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 2px; }
+.act {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 500;
+}
+.act:hover { background: var(--desk); color: var(--ink); }
+
+/* Recipe cards */
+.meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--ink-soft); font-size: 14px; }
+.meta span { display: inline-flex; align-items: center; gap: 4px; }
+.frozen {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--c0);
+  color: var(--card);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.rcard-open {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.rcard-open::after { content: ""; position: absolute; inset: 0; border-radius: 6px; }
+.rcard-open:focus-visible { outline: none; }
+.rcard-open:focus-visible::after { outline: 3px solid var(--c0); outline-offset: 2px; }
+.ing-sum { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
+.more { margin: 2px 0 0; color: var(--accent); font-size: 15px; font-weight: 700; text-align: right; }
+
+/* Menus (献立) */
+.menus { display: flex; flex-direction: column; gap: 8px; }
+.sec-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.sec-title small { font-family: var(--font-body); font-weight: 500; font-size: 13px; color: var(--ink-soft); }
+.menu-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 -16px;
+  padding: 2px 16px 10px;
+  scrollbar-width: none;
+}
+.menu-row::-webkit-scrollbar { display: none; }
+.menu {
+  flex: none;
+  width: min(300px, 82%);
+  scroll-snap-align: start;
+  background: var(--card);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--accent);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.menu h3 { margin: 0; font-size: 17px; line-height: 1.45; }
+.menu p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+.menu ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.menu-item {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+}
+.menu-item .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat); flex: none; }
+.menu-item .go { margin-left: auto; flex: none; white-space: nowrap; color: var(--ink-soft); font-weight: 500; font-size: 13px; }
+.menu-item.plain { cursor: default; font-weight: 500; color: var(--ink-soft); background: transparent; border-style: dashed; }
+
+/* Empty / info card */
+.blank {
+  background: var(--card);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 18px 16px 16px;
+}
+.blank h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+}
+.blank p { margin: 0; }
+
+.foot { margin: 8px 0 0; color: var(--ink-soft); font-size: 14px; text-align: center; }
+
+/* Write button */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 22px 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 17px;
+  box-shadow: 0 6px 20px rgba(194, 63, 56, .35);
+  z-index: 5;
+}
+.fab:disabled { opacity: .45; cursor: default; box-shadow: none; }
+
+/* Sheets */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 20, .45);
+  z-index: 10;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  max-height: 92%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--card);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 11;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, .2);
+  animation: rise .22s ease-out;
+}
+.sheet.tall { height: 92%; }
+@keyframes rise { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+
+.sheet form, .sheet-inner { display: flex; flex-direction: column; gap: 14px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet-head h2 { margin: 0; font-family: var(--font-display); font-size: 22px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span, .legend { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.field small { font-weight: 500; }
+.field input, .field textarea, .row input {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  padding: 12px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+.field textarea { min-height: 180px; resize: vertical; }
+.field textarea.short { min-height: 110px; }
+.field input:focus, .field textarea:focus, .row input:focus { outline: none; border-color: var(--c0); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-pick {
+  min-height: 42px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cat);
+  background: transparent;
+  color: var(--cat);
+  font-weight: 700;
+  font-size: 16px;
+}
+.chip-pick[aria-checked="true"] { background: var(--cat); color: var(--card); }
+.check { display: flex; align-items: center; gap: 10px; font-size: 16px; min-height: 44px; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.form-msg { margin: 0; color: var(--accent); font-size: 15px; font-weight: 500; }
+.form-msg:empty { display: none; }
+.sheet-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.primary {
+  margin-left: auto;
+  min-height: 50px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 17px;
+}
+.primary:disabled { opacity: .5; cursor: default; }
+.ghost {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 500;
+  font-size: 16px;
+}
+.danger-link {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.confirm {
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.confirm p { margin: 0; }
+.confirm div { display: flex; justify-content: flex-end; gap: 10px; }
+.danger {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.cat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cat-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--rule);
+}
+.cat-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--cat); flex: none; }
+.cat-name { font-weight: 700; }
+.cat-n { color: var(--ink-soft); font-size: 14px; font-variant-numeric: tabular-nums; }
+.cat-del { margin-left: auto; }
+.cat-del:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 8px; }
+.row input { flex: 1; min-width: 0; }
+.row button { flex: none; }
+.hint { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+/* Recipe detail */
+.rd { display: flex; flex-direction: column; gap: 18px; }
+.rd-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.4;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--cat);
+  text-wrap: balance;
+}
+.rd h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rd h3 small { font-weight: 500; font-size: 13px; }
+.ings { list-style: none; margin: 0; padding: 0; }
+.ing {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  text-align: left;
+  font-size: 17px;
+}
+.ing .box {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--line);
+  border-radius: 5px;
+  align-self: center;
+}
+.ing .nm { flex: 1; }
+.ing .am { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; max-width: 55%; }
+.ing[aria-pressed="true"] .nm, .ing[aria-pressed="true"] .am { color: var(--ink-soft); text-decoration: line-through; }
+.ing[aria-pressed="true"] .box { background: var(--c2); border-color: var(--c2); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.steps li {
+  counter-increment: s;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.steps li::before {
+  content: counter(s);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
+.srcs { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.srcs a { color: var(--c0); overflow-wrap: anywhere; }
+.rd-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--card);
+  font-size: 15px;
+  font-weight: 500;
+  z-index: 20;
+  pointer-events: none;
+}
+.toast:empty { display: none; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- App version: header button, login, settings, menu editor ---------- */
+.wrap { padding-top: calc(24px + env(safe-area-inset-top, 0px)); }
+.top-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  display: inline-grid;
+  place-items: center;
+}
+.icon-btn:hover { background: var(--tab); color: var(--ink); }
+
+.login {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--desk);
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(48px + env(safe-area-inset-top, 0px)) 16px 32px;
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 24px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-icon { width: 72px; height: 72px; border-radius: 16px; align-self: center; }
+.login-card h1 {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: .06em;
+}
+.login-card .hint { text-align: center; }
+.login-fields { display: flex; flex-direction: column; gap: 12px; }
+.primary.wide { margin-left: 0; width: 100%; }
+.link {
+  align-self: center;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--c0);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.set-sec { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.set-sec h3 { margin: 0; font-size: 16px; }
+.set-sec .ghost, .set-sec .primary { align-self: flex-start; margin-left: 0; }
+.filebtn { display: inline-flex; align-items: center; cursor: pointer; }
+.set-msg { margin: 0; font-size: 15px; color: var(--ink); white-space: pre-wrap; }
+.set-msg:empty { display: none; }
+
+.menu-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.menu-head .act { flex: none; margin: -6px -8px 0 0; min-height: 36px; }
+.menu-add {
+  justify-content: center;
+  align-items: center;
+  border: 1.5px dashed var(--line);
+  border-top: 1.5px dashed var(--line);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 16px;
+  min-height: 120px;
+  width: min(200px, 60%);
+}
+.m-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.m-items li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 2px 4px 2px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+}
+.m-items li.plain { border-style: dashed; background: transparent; }
+.m-items .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat); flex: none; margin-right: 4px; }
+.m-items .nm { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.m-items li.plain .nm { font-weight: 500; color: var(--ink-soft); }
+.m-items button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 18px;
+  display: inline-grid;
+  place-items: center;
+}
+.m-items button:disabled { opacity: .3; cursor: default; }
+.m-items button:hover:not(:disabled) { background: var(--tab); color: var(--ink); }
+.m-empty { margin: 0; color: var(--ink-soft); font-size: 15px; }
+#meditor fieldset { min-width: 0; min-inline-size: 0; }
+#meditor, #setsheet { overflow-x: hidden; }
+.row select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  padding: 12px;
+  font: inherit;
+  font-size: 17px;
+  color: inherit;
+}
+.row select:focus { outline: none; border-color: var(--c0); }
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <form class="login-card" id="login-form" novalidate>
+    <img src="icon-192.png" alt="" class="login-icon" width="72" height="72">
+    <h1>家事メモ</h1>
+    <p class="hint" id="login-lead">家計簿と同じメールアドレスとパスワードでログインしてください。</p>
+    <div class="login-fields" id="login-fields">
+      <label class="field" for="login-email">
+        <span>メールアドレス</span>
+        <input type="email" id="login-email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
+      </label>
+      <label class="field" for="login-pass">
+        <span>パスワード</span>
+        <input type="password" id="login-pass" autocomplete="current-password">
+      </label>
+    </div>
+    <p class="form-msg" id="login-msg" role="alert"></p>
+    <button type="submit" class="primary wide" id="login-btn">ログイン</button>
+    <button type="button" class="link" id="forgot-btn">パスワードを忘れたとき</button>
+  </form>
+</div>
+
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>家事メモ</h1>
+      <p class="sub" id="sub">教えてもらった洗濯・料理・掃除のコツ</p>
+    </div>
+    <div class="top-side">
+      <button type="button" class="icon-btn" id="open-set" aria-label="設定とバックアップ"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+      <p class="count" id="count" aria-live="polite"></p>
+    </div>
+  </header>
+
+  <div class="views" role="group" aria-label="表示の切り替え">
+    <button type="button" class="view-btn" id="v-tips" aria-pressed="true">コツ <span class="n" id="v-tips-n"></span></button>
+    <button type="button" class="view-btn" id="v-recipes" aria-pressed="false">レシピ <span class="n" id="v-recipes-n"></span></button>
+  </div>
+
+  <label class="search" for="q">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
+    <span class="sr">探す</span>
+    <input id="q" type="search" placeholder="メモを探す（例：タオル、ごはん）" autocomplete="off" enterkeyhint="search">
+  </label>
+
+  <section class="menus" id="menus" hidden></section>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="分類"></nav>
+  <div class="filter-row" id="filter-row" hidden>
+    <button type="button" class="toggle" id="frozen-only" aria-pressed="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"></path></svg>
+      冷凍のまま作れるものだけ
+    </button>
+  </div>
+
+  <p class="status" id="status" role="status" hidden></p>
+
+  <section class="stack" id="list" aria-label="一覧"></section>
+
+  <p class="foot">ホーム画面に追加すると、アプリのように開けます。</p>
+</main>
+
+<button type="button" class="fab" id="add" disabled>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+  <span id="add-label">メモを書く</span>
+</button>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<!-- Note editor -->
+<section class="sheet" id="editor" role="dialog" aria-modal="true" aria-labelledby="editor-title" hidden>
+  <form id="form" novalidate>
+    <div class="sheet-head">
+      <h2 id="editor-title">新しいメモ</h2>
+      <button type="button" class="ghost" data-close>やめる</button>
+    </div>
+    <fieldset>
+      <span class="legend" id="cats-label">分類</span>
+      <div class="chips" id="f-cats" role="radiogroup" aria-labelledby="cats-label"></div>
+    </fieldset>
+    <label class="field" for="f-title">
+      <span>タイトル</span>
+      <input id="f-title" maxlength="80" placeholder="例：タオルの洗い方" autocomplete="off">
+    </label>
+    <label class="field" for="f-body">
+      <span>やり方・コツ</span>
+      <textarea id="f-body" rows="7" placeholder="例：洗剤の量、干し方、気をつけること"></textarea>
+    </label>
+    <label class="check" for="f-pin">
+      <input type="checkbox" id="f-pin">
+      大事なメモとして一番上に出す
+    </label>
+    <p class="form-msg" id="form-msg" role="alert"></p>
+    <div class="sheet-actions">
+      <button type="button" class="danger-link" id="del" hidden>このメモを消す</button>
+      <button type="submit" class="primary" id="save">保存する</button>
+    </div>
+    <div class="confirm" id="confirm" hidden>
+      <p>このメモを消しますか？消すと元に戻せません。</p>
+      <div>
+        <button type="button" class="ghost" id="confirm-no">やめる</button>
+        <button type="button" class="danger" id="confirm-yes">消す</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Category editor -->
+<section class="sheet" id="catsheet" role="dialog" aria-modal="true" aria-labelledby="cat-title" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="cat-title">分類を編集</h2>
+      <button type="button" class="ghost" data-close>閉じる</button>
+    </div>
+    <ul class="cat-list" id="cat-list"></ul>
+    <form id="cat-form" novalidate>
+      <label class="field" for="cat-new">
+        <span>新しい分類を追加</span>
+        <span class="row">
+          <input id="cat-new" maxlength="10" placeholder="例：買い物" autocomplete="off">
+          <button type="submit" class="ghost" id="cat-add">追加</button>
+        </span>
+      </label>
+    </form>
+    <p class="form-msg" id="cat-msg" role="alert"></p>
+    <p class="hint">メモが入っている分類は消せません。先にメモの分類を変えてから消してください。</p>
+  </div>
+</section>
+
+<!-- Recipe detail -->
+<section class="sheet tall" id="rdetail" role="dialog" aria-modal="true" aria-labelledby="rd-title" hidden>
+  <div id="rd-body"></div>
+</section>
+
+<!-- Recipe editor -->
+<section class="sheet" id="reditor" role="dialog" aria-modal="true" aria-labelledby="reditor-title" hidden>
+  <form id="rform" novalidate>
+    <div class="sheet-head">
+      <h2 id="reditor-title">新しいレシピ</h2>
+      <button type="button" class="ghost" data-close>やめる</button>
+    </div>
+    <label class="field" for="r-title">
+      <span>料理の名前</span>
+      <input id="r-title" maxlength="60" placeholder="例：鮭の炊き込みご飯" autocomplete="off">
+    </label>
+    <fieldset>
+      <span class="legend" id="kinds-label">種類</span>
+      <div class="chips" id="r-kinds" role="radiogroup" aria-labelledby="kinds-label"></div>
+    </fieldset>
+    <div class="two">
+      <label class="field" for="r-serv">
+        <span>何人分</span>
+        <input id="r-serv" maxlength="20" placeholder="例：2人分" autocomplete="off">
+      </label>
+      <label class="field" for="r-min">
+        <span>かかる時間</span>
+        <input id="r-min" maxlength="30" placeholder="例：約20分" autocomplete="off">
+      </label>
+    </div>
+    <label class="check" for="r-frozen">
+      <input type="checkbox" id="r-frozen">
+      冷凍の食材を凍ったまま使える
+    </label>
+    <label class="field" for="r-ing">
+      <span>材料 <small>（1行に1つ。「材料名 分量」の形で）</small></span>
+      <textarea id="r-ing" class="short" placeholder="例：&#10;鮭 2切れ&#10;しめじ 1/2パック"></textarea>
+    </label>
+    <label class="field" for="r-steps">
+      <span>作り方 <small>（1行に1手順）</small></span>
+      <textarea id="r-steps" placeholder="例：&#10;しめじは根元を切り落としてほぐす。&#10;鮭としめじをのせて炊く。"></textarea>
+    </label>
+    <label class="field" for="r-tips">
+      <span>ポイント・メモ</span>
+      <textarea id="r-tips" class="short" placeholder="例：生鮭なら、炊き上がりに味見して塩で調整"></textarea>
+    </label>
+    <label class="field" for="r-src">
+      <span>出典 <small>（任意。1行に1つ「名前 URL」）</small></span>
+      <textarea id="r-src" class="short" placeholder="例：デリッシュキッチン https://…"></textarea>
+    </label>
+    <p class="form-msg" id="r-msg" role="alert"></p>
+    <div class="sheet-actions">
+      <button type="button" class="danger-link" id="r-del" hidden>このレシピを消す</button>
+      <button type="submit" class="primary" id="r-save">保存する</button>
+    </div>
+    <div class="confirm" id="r-confirm" hidden>
+      <p>このレシピを消しますか？消すと元に戻せません。</p>
+      <div>
+        <button type="button" class="ghost" id="r-confirm-no">やめる</button>
+        <button type="button" class="danger" id="r-confirm-yes">消す</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Settings -->
+<section class="sheet" id="setsheet" role="dialog" aria-modal="true" aria-labelledby="set-title" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="set-title">設定</h2>
+      <button type="button" class="ghost" data-close>閉じる</button>
+    </div>
+    <p class="hint" id="set-who"></p>
+    <section class="set-sec">
+      <h3>バックアップを保存</h3>
+      <p class="hint">メモ・レシピ・献立を、1つのファイル（.json）にまとめて保存します。ファイルは自分の端末やiCloud Driveに置き、GitHubなど人から見える場所には置かないでください。</p>
+      <button type="button" class="ghost" id="backup-save">バックアップを保存</button>
+    </section>
+    <section class="set-sec">
+      <h3>ファイルから読み込む</h3>
+      <p class="hint">バックアップや、引っ越し用のファイル（.json）を読み込みます。同じメモ・レシピはファイルの内容で上書きされ、ほかのものはそのまま残ります。</p>
+      <label class="ghost filebtn" for="restore-file">ファイルを選ぶ</label>
+      <input type="file" id="restore-file" class="sr" accept=".json,application/json">
+      <button type="button" class="primary" id="restore-run" hidden>読み込む</button>
+    </section>
+    <p class="set-msg" id="set-msg" role="status" aria-live="polite"></p>
+    <section class="set-sec">
+      <button type="button" class="ghost" id="logout">ログアウト</button>
+    </section>
+  </div>
+</section>
+
+<!-- Menu editor -->
+<section class="sheet" id="meditor" role="dialog" aria-modal="true" aria-labelledby="meditor-title" hidden>
+  <form id="mform" novalidate>
+    <div class="sheet-head">
+      <h2 id="meditor-title">新しい献立</h2>
+      <button type="button" class="ghost" data-close>やめる</button>
+    </div>
+    <label class="field" for="m-title">
+      <span>献立の名前</span>
+      <input id="m-title" maxlength="60" placeholder="例：フライパンで焼く日" autocomplete="off">
+    </label>
+    <label class="field" for="m-note">
+      <span>ひとこと <small>（任意）</small></span>
+      <textarea id="m-note" class="short" maxlength="400" placeholder="例：ご飯は先に炊いておく"></textarea>
+    </label>
+    <fieldset>
+      <span class="legend">中身 <small>（上から順に並びます）</small></span>
+      <ul class="m-items" id="m-items"></ul>
+      <span class="row">
+        <select id="m-pick" aria-label="追加するレシピ"></select>
+        <button type="button" class="ghost" id="m-pick-add">追加</button>
+      </span>
+      <span class="row">
+        <input id="m-label" maxlength="60" placeholder="レシピ以外（例：白いご飯）" autocomplete="off" aria-label="レシピ以外に添えるもの">
+        <button type="button" class="ghost" id="m-label-add">追加</button>
+      </span>
+    </fieldset>
+    <p class="form-msg" id="m-msg" role="alert"></p>
+    <div class="sheet-actions">
+      <button type="button" class="danger-link" id="m-del" hidden>この献立を消す</button>
+      <button type="submit" class="primary" id="m-save">保存する</button>
+    </div>
+    <div class="confirm" id="m-confirm" hidden>
+      <p>この献立を消しますか？レシピは消えません。</p>
+      <div>
+        <button type="button" class="ghost" id="m-confirm-no">やめる</button>
+        <button type="button" class="danger" id="m-confirm-yes">消す</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import {
+  initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch
+} from "./firebase.js";
+import { firebaseConfig } from "./config.js";
+
+(function () {
+  "use strict";
+
+  var DEFAULT_CATS = ["洗濯", "料理", "掃除", "その他"];
+  var KINDS = ["主食", "主菜", "副菜", "汁物", "その他"];
+  var KIND_COLOR = { "主食": "var(--c4)", "主菜": "var(--c1)", "副菜": "var(--c2)", "汁物": "var(--c0)", "その他": "var(--c3)" };
+  var ALL = "すべて";
+  var DRAFT_KEY = "kaji-memo-draft";
+
+  var S = {
+    view: "tips",
+    notes: [],
+    recipes: [],
+    menus: [],
+    catsDoc: null,
+    filter: ALL,
+    rFilter: ALL,
+    frozenOnly: false,
+    q: "",
+    rq: "",
+    loaded: false,
+    rLoaded: false,
+    slow: false,
+    dbState: "connecting",
+    listenErr: null,
+    readOnly: false,
+    editingId: null,
+    rEditingId: null,
+    openRecipeId: null,
+    formCat: null,
+    formKind: "主菜",
+    saving: false,
+    catBusy: false,
+    pinBusy: {},
+    checked: {},
+    email: "",
+    denied: false,
+    mEditingId: null,
+    mItems: []
+  };
+  var db = null;
+  var auth = null;
+  var slowTimer = null;
+  // 書き込めるのは、ログインしていて、読み書きを許されたアカウントのときだけ
+  function writable() { return S.dbState === "ok" && !S.readOnly && !S.denied; }
+  var lastFocus = null;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function str(v, max) { return typeof v === "string" ? v.slice(0, max || 4000) : ""; }
+  function cleanCat(c) {
+    return (typeof c === "string" && c.trim()) ? c.trim().slice(0, 20) : "その他";
+  }
+  function cleanKind(k) { return KINDS.indexOf(k) >= 0 ? k : "その他"; }
+  function cats() {
+    var base = (S.catsDoc && S.catsDoc.length) ? S.catsDoc.slice() : DEFAULT_CATS.slice();
+    S.notes.forEach(function (n) { if (base.indexOf(n.cat) < 0) base.push(n.cat); });
+    return base;
+  }
+  function catColor(c) {
+    var i = cats().indexOf(c);
+    if (i < 0) i = 3;
+    return "var(--c" + (i % 6) + ")";
+  }
+  function countIn(c) {
+    var k = 0;
+    S.notes.forEach(function (n) { if (n.cat === c) k++; });
+    return k;
+  }
+  function fmtDate(ms) {
+    if (!ms) return "";
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) return "";
+    return d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate();
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function withRetry(fn) {
+    return fn().catch(function (e) {
+      if (e && e.code === "unavailable") {
+        return wait(600 + Math.random() * 900).then(fn);
+      }
+      throw e;
+    });
+  }
+  function findBy(list, id) {
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+  function safeUrl(u) { return /^https?:\/\/[^\s"<>]+$/i.test(u || "") ? u : ""; }
+  function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u; } }
+
+  /* Search matches hiragana and katakana alike, and full/half width alike. */
+  function norm(s) {
+    s = String(s == null ? "" : s);
+    try { s = s.normalize("NFKC"); } catch (e) { /* older browsers */ }
+    return s.toLowerCase().replace(/[ァ-ヶ]/g, function (ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0x60);
+    });
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.textContent = ""; }, 2600);
+  }
+
+  function errorText(e) {
+    var code = e && e.code;
+    if (code === "invalid_argument" || code === "not_granted") {
+      return "このアカウントでは家事メモに書き込めません。家事メモを使うアカウントでログインし直してください。";
+    }
+    if (code === "quota_exceeded") return "Firebaseの無料で使える量を使い切ったため、保存できませんでした。日本時間の夕方（16〜17時ごろ）に戻ります。";
+    if (code === "resource_exhausted") return "操作が続いたため、少し待つ必要があります。数秒おいてから、もう一度押してください。";
+    return "保存できませんでした。通信の状態を確かめて、もう一度押してください。";
+  }
+
+  /* ---------- Draft (only for new notes, kept in this browser) ---------- */
+  function loadDraft() {
+    try { var v = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); return v && typeof v === "object" ? v : null; }
+    catch (e) { return null; }
+  }
+  function saveDraft() {
+    if (S.editingId) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        title: $("f-title").value, body: $("f-body").value, cat: S.formCat, pinned: $("f-pin").checked
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ } }
+
+  /* ---------- Recipe text helpers ---------- */
+  function parseIngredients(text) {
+    return text.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 60).map(function (l) {
+      var m = l.match(/^(.*?)[\s　:：…]+([^\s　:：…]+)$/);
+      if (m && m[1].trim()) return { n: m[1].trim().slice(0, 60), a: m[2].trim().slice(0, 40) };
+      return { n: l.slice(0, 60), a: "" };
+    });
+  }
+  function parseSteps(text) {
+    return text.split(/\n/).map(function (l) {
+      return l.trim().replace(/^([0-9０-９]+)[\.．、\)）]\s*/, "").replace(/^[①-⑳]\s*/, "");
+    }).filter(Boolean).slice(0, 40).map(function (l) { return l.slice(0, 400); });
+  }
+  function parseSources(text) {
+    return text.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10).map(function (l) {
+      var m = l.match(/https?:\/\/\S+/);
+      if (!m) return { name: l.slice(0, 80), url: "" };
+      return { name: l.replace(m[0], "").trim().slice(0, 80), url: m[0].slice(0, 500) };
+    });
+  }
+  function recipeText(r) {
+    var out = [r.title];
+    var meta = [r.servings, r.minutes].filter(Boolean).join("・");
+    if (meta) out.push(meta);
+    if (r.ingredients.length) {
+      out.push("", "【材料】");
+      r.ingredients.forEach(function (i) { out.push(i.n + (i.a ? "　" + i.a : "")); });
+    }
+    if (r.steps.length) {
+      out.push("", "【作り方】");
+      r.steps.forEach(function (s, k) { out.push((k + 1) + ". " + s); });
+    }
+    if (r.tips) out.push("", "【ポイント】", r.tips);
+    return out.join("\n");
+  }
+
+  /* ---------- Rendering ---------- */
+  function visibleNotes() {
+    var q = norm(S.q.trim());
+    var list = S.notes.filter(function (n) {
+      if (S.filter !== ALL && n.cat !== S.filter) return false;
+      if (!q) return true;
+      return norm(n.title + "\n" + n.body + "\n" + n.cat).indexOf(q) >= 0;
+    });
+    list.sort(function (a, b) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+    return list;
+  }
+
+  function visibleRecipes() {
+    var q = norm(S.rq.trim());
+    var list = S.recipes.filter(function (r) {
+      if (S.rFilter !== ALL && r.kind !== S.rFilter) return false;
+      if (S.frozenOnly && !r.frozenOk) return false;
+      if (!q) return true;
+      var hay = [r.title, r.kind, r.tips].concat(r.ingredients.map(function (i) { return i.n; }), r.steps).join("\n");
+      return norm(hay).indexOf(q) >= 0;
+    });
+    list.sort(function (a, b) {
+      var ka = KINDS.indexOf(a.kind), kb = KINDS.indexOf(b.kind);
+      if (S.rFilter === ALL && ka !== kb) return ka - kb;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+    return list;
+  }
+
+  function renderHeader() {
+    var tips = S.view === "tips";
+    $("sub").textContent = tips ? "教えてもらった洗濯・料理・掃除のコツ" : "2人分で作れる、かんたんレシピと献立";
+    $("count").innerHTML = tips
+      ? (S.notes.length ? "<b>" + S.notes.length + "</b>枚" : "")
+      : (S.recipes.length ? "<b>" + S.recipes.length + "</b>品" : "");
+    $("v-tips").setAttribute("aria-pressed", String(tips));
+    $("v-recipes").setAttribute("aria-pressed", String(!tips));
+    $("v-tips-n").textContent = S.notes.length ? S.notes.length : "";
+    $("v-recipes-n").textContent = S.recipes.length ? S.recipes.length : "";
+    var q = $("q");
+    q.placeholder = tips ? "メモを探す（例：タオル、ごはん）" : "レシピを探す（例：しゃけ、しめじ）";
+    var want = tips ? S.q : S.rq;
+    if (q.value !== want) q.value = want;
+    $("add-label").textContent = tips ? "メモを書く" : "レシピを書く";
+    $("filter-row").hidden = tips;
+  }
+
+  function renderTabs() {
+    var html;
+    if (S.view === "tips") {
+      var list = cats();
+      if (S.filter !== ALL && list.indexOf(S.filter) < 0) S.filter = ALL;
+      html = [ALL].concat(list).map(function (c) {
+        var n = c === ALL ? S.notes.length : countIn(c);
+        var on = S.filter === c;
+        var color = c === ALL ? "var(--ink)" : catColor(c);
+        return '<button type="button" class="tab' + (on ? " is-on" : "") + '" role="tab" aria-selected="' + on +
+          '" data-cat="' + esc(c) + '" style="--cat:' + color + '"><span>' + esc(c) + '</span><span class="n">' + n + "</span></button>";
+      }).join("");
+      if (writable()) {
+        html += '<button type="button" class="tab tab-edit" id="open-cats">＋ 分類</button>';
+      }
+    } else {
+      html = [ALL].concat(KINDS).map(function (k) {
+        var n = k === ALL ? S.recipes.length : S.recipes.filter(function (r) { return r.kind === k; }).length;
+        if (k !== ALL && !n && S.rFilter !== k) return "";
+        var on = S.rFilter === k;
+        var color = k === ALL ? "var(--ink)" : KIND_COLOR[k];
+        return '<button type="button" class="tab' + (on ? " is-on" : "") + '" role="tab" aria-selected="' + on +
+          '" data-kind="' + esc(k) + '" style="--cat:' + color + '"><span>' + esc(k) + '</span><span class="n">' + n + "</span></button>";
+      }).join("");
+    }
+    $("tabs").innerHTML = html;
+    $("frozen-only").setAttribute("aria-pressed", String(S.frozenOnly));
+  }
+
+  function renderStatus() {
+    var el = $("status");
+    var msg = "";
+    var loaded = S.view === "tips" ? S.loaded : S.rLoaded;
+    var has = S.view === "tips" ? S.notes.length : S.recipes.length;
+    if (S.dbState === "none") {
+      msg = "";
+    } else if (S.denied) {
+      msg = "このアカウントでは家事メモを開けません。家事メモを使うアカウントでログインし直してください（右上の歯車 › ログアウト）。";
+    } else if (S.listenErr) {
+      msg = "読み込めませんでした。通信の状態を確かめて、アプリを開き直してください。";
+    } else if (S.slow && !loaded) {
+      msg = has
+        ? "通信がつながりにくいため、表示が最新でない可能性があります。"
+        : "読み込めていません。通信の状態を確かめてください。";
+    } else if (S.readOnly) {
+      msg = "このメモ帳は見るだけの設定です。";
+    }
+    el.textContent = msg;
+    el.hidden = !msg;
+  }
+
+  function blankHTML(title, text) {
+    return '<div class="blank"><h2>' + esc(title) + '</h2><p class="ruled">' + esc(text) + "</p></div>";
+  }
+
+  var STAR = function (on) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="' + (on ? "currentColor" : "none") +
+      '" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg>';
+  };
+  var CLOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+  var PEOPLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16 14.2c2.8.3 5 2.6 5 5.8"></path></svg>';
+  var SNOW = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"></path></svg>';
+
+  function noteHTML(n) {
+    var canWrite = writable();
+    var pinLabel = n.pinned ? "大事なメモから外す" : "大事なメモにする";
+    return '<article class="note" data-id="' + esc(n.id) + '" style="--cat:' + catColor(n.cat) + '">' +
+      '<div class="note-head"><span class="chip">' + esc(n.cat) + '</span><span class="date">' + esc(fmtDate(n.createdAt)) + "</span>" +
+      '<button type="button" class="pin" data-act="pin" aria-pressed="' + n.pinned + '" aria-label="' + pinLabel + '"' + (canWrite ? "" : " disabled") + ">" + STAR(n.pinned) + "</button></div>" +
+      '<h2 class="note-title">' + (n.title ? esc(n.title) : "（タイトルなし）") + "</h2>" +
+      (n.body ? '<div class="note-body">' + esc(n.body) + "</div>" : "") +
+      '<div class="note-actions"><button type="button" class="act" data-act="copy">コピー</button>' +
+      (canWrite ? '<button type="button" class="act" data-act="edit">直す</button>' : "") +
+      "</div></article>";
+  }
+
+  function metaHTML(r) {
+    var parts = [];
+    if (r.servings) parts.push("<span>" + PEOPLE + esc(r.servings) + "</span>");
+    if (r.minutes) parts.push("<span>" + CLOCK + esc(r.minutes) + "</span>");
+    if (r.frozenOk) parts.push('<span class="frozen">' + SNOW + "冷凍のままOK</span>");
+    return parts.join("");
+  }
+
+  function recipeCardHTML(r) {
+    var names = r.ingredients.map(function (i) { return i.n; });
+    var sum = names.slice(0, 6).join("・") + (names.length > 6 ? " ほか" : "");
+    return '<article class="note" data-rid="' + esc(r.id) + '" style="--cat:' + KIND_COLOR[r.kind] + '">' +
+      '<div class="note-head"><span class="chip">' + esc(r.kind) + "</span></div>" +
+      '<h2 class="note-title"><button type="button" class="rcard-open" data-open="' + esc(r.id) + '">' + esc(r.title || "（名前なし）") + "</button></h2>" +
+      '<div class="meta">' + metaHTML(r) + "</div>" +
+      (sum ? '<p class="ing-sum">材料：' + esc(sum) + "</p>" : "") +
+      '<p class="more" aria-hidden="true">作り方を見る ›</p>' +
+      "</article>";
+  }
+
+  function renderMenus() {
+    var el = $("menus");
+    var w = writable();
+    var canAdd = w && S.recipes.length > 0;
+    if (S.view !== "recipes" || S.rq.trim() || (!S.menus.length && !canAdd)) { el.hidden = true; el.innerHTML = ""; return; }
+    var cards = S.menus.map(function (m) {
+      var items = m.items.map(function (it) {
+        var r = it.id ? findBy(S.recipes, it.id) : null;
+        if (r) {
+          return '<li><button type="button" class="menu-item" data-open="' + esc(r.id) + '" style="--cat:' + KIND_COLOR[r.kind] + '">' +
+            '<span class="dot"></span><span>' + esc(r.title) + '</span><span class="go">見る ›</span></button></li>';
+        }
+        var label = it.label || "";
+        return label ? '<li><span class="menu-item plain"><span>' + esc(label) + "</span></span></li>" : "";
+      }).join("");
+      return '<article class="menu"><div class="menu-head"><h3>' + esc(m.title) + "</h3>" +
+        (w ? '<button type="button" class="act" data-medit="' + esc(m.id) + '" aria-label="献立「' + esc(m.title) + '」を直す">直す</button>' : "") +
+        "</div>" + (m.note ? "<p>" + esc(m.note) + "</p>" : "") + "<ul>" + items + "</ul></article>";
+    }).join("");
+    if (canAdd) cards += '<button type="button" class="menu menu-add" data-madd="1">＋ 献立を作る</button>';
+    var n = S.menus.length + (canAdd ? 1 : 0);
+    el.innerHTML = '<h2 class="sec-title">献立' + (n > 1 ? " <small>横にスクロールできます</small>" : "") + '</h2><div class="menu-row">' + cards + "</div>";
+    el.hidden = false;
+  }
+
+  function renderList() {
+    var el = $("list");
+    if (S.dbState === "none") { el.innerHTML = ""; return; }
+    if (S.view === "tips") {
+      if (!S.notes.length) {
+        if (!S.loaded) { el.innerHTML = S.slow ? "" : blankHTML("読み込み中", "メモを取り出しています。"); return; }
+        if (S.listenErr) { el.innerHTML = ""; return; }
+        el.innerHTML = blankHTML("まだメモがありません", "右下の「メモを書く」から、1枚目のカードを書けます。");
+        return;
+      }
+      var list = visibleNotes();
+      if (!list.length) {
+        el.innerHTML = S.q.trim()
+          ? blankHTML("見つかりませんでした", "「" + S.q.trim() + "」が入ったメモはありません。言葉を短くすると見つかることがあります。")
+          : blankHTML("「" + S.filter + "」のメモはまだありません", "右下の「メモを書く」から追加できます。");
+        return;
+      }
+      el.innerHTML = list.map(noteHTML).join("");
+      return;
+    }
+    if (!S.recipes.length) {
+      if (!S.rLoaded) { el.innerHTML = S.slow ? "" : blankHTML("読み込み中", "レシピを取り出しています。"); return; }
+      if (S.listenErr) { el.innerHTML = ""; return; }
+      el.innerHTML = blankHTML("まだレシピがありません", "右下の「レシピを書く」から追加できます。");
+      return;
+    }
+    var rl = visibleRecipes();
+    if (!rl.length) {
+      el.innerHTML = S.rq.trim()
+        ? blankHTML("見つかりませんでした", "「" + S.rq.trim() + "」が入ったレシピはありません。材料の名前でも探せます。")
+        : blankHTML("当てはまるレシピがありません", "種類や「冷凍のまま作れるものだけ」の切り替えを戻すと表示されます。");
+      return;
+    }
+    el.innerHTML = rl.map(recipeCardHTML).join("");
+  }
+
+  function renderFab() {
+    var fab = $("add");
+    fab.hidden = S.readOnly || S.denied;
+    fab.disabled = S.dbState !== "ok";
+  }
+
+  function render() {
+    renderHeader();
+    renderMenus();
+    renderTabs();
+    renderStatus();
+    renderList();
+    renderFab();
+    if (!$("catsheet").hidden) renderCatSheet();
+    if (!$("rdetail").hidden) renderDetail();
+    if (!$("meditor").hidden) renderMenuItems();
+  }
+
+  /* ---------- Views ---------- */
+  function readHash() { return location.hash === "#recipes" ? "recipes" : "tips"; }
+  function setView(v) {
+    if (S.view === v) return;
+    S.view = v;
+    var h = v === "recipes" ? "#recipes" : "#tips";
+    if (location.hash !== h) {
+      try { history.replaceState(null, "", h); } catch (e) { location.hash = h; }
+    }
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- Sheets ---------- */
+  function openSheet(id) {
+    if ($("scrim").hidden) lastFocus = document.activeElement;
+    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor"].forEach(function (s) { $(s).hidden = s !== id; });
+    $("scrim").hidden = false;
+    $(id).scrollTop = 0;
+    document.body.classList.add("locked");
+  }
+  function closeSheets() {
+    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor"].forEach(function (s) { $(s).hidden = true; });
+    $("scrim").hidden = true;
+    $("confirm").hidden = true;
+    $("r-confirm").hidden = true;
+    $("m-confirm").hidden = true;
+    S.openRecipeId = null;
+    document.body.classList.remove("locked");
+    if (lastFocus && typeof lastFocus.focus === "function" && document.body.contains(lastFocus)) {
+      try { lastFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    }
+  }
+
+  /* ---------- Notes ---------- */
+  function renderFormCats() {
+    $("f-cats").innerHTML = cats().map(function (c) {
+      var on = S.formCat === c;
+      return '<button type="button" class="chip-pick" role="radio" aria-checked="' + on + '" data-cat="' + esc(c) +
+        '" style="--cat:' + catColor(c) + '">' + esc(c) + "</button>";
+    }).join("");
+  }
+
+  function openEditor(id) {
+    if (!writable()) return;
+    var n = id ? findBy(S.notes, id) : null;
+    if (id && !n) return;
+    S.editingId = n ? n.id : null;
+    var draft = n ? null : loadDraft();
+    var list = cats();
+    var defCat = S.filter !== ALL ? S.filter : list[0];
+    S.formCat = n ? n.cat : (draft && list.indexOf(draft.cat) >= 0 ? draft.cat : defCat);
+    $("editor-title").textContent = n ? "メモを直す" : "新しいメモ";
+    $("f-title").value = n ? n.title : (draft && typeof draft.title === "string" ? draft.title : "");
+    $("f-body").value = n ? n.body : (draft && typeof draft.body === "string" ? draft.body : "");
+    $("f-pin").checked = n ? n.pinned : !!(draft && draft.pinned);
+    $("form-msg").textContent = "";
+    $("del").hidden = !n;
+    $("confirm").hidden = true;
+    $("save").disabled = false;
+    renderFormCats();
+    openSheet("editor");
+  }
+
+  function saveNote(ev) {
+    ev.preventDefault();
+    if (S.saving || !db) return;
+    var title = $("f-title").value.trim();
+    var body = $("f-body").value.replace(/\s+$/, "");
+    if (!title && !body.trim()) {
+      $("form-msg").textContent = "タイトルか、やり方・コツのどちらかを書いてください。";
+      return;
+    }
+    var now = Date.now();
+    var data = { title: title, body: body, cat: S.formCat || "その他", pinned: $("f-pin").checked, updatedAt: now };
+    var editing = S.editingId;
+    var ref;
+    if (editing) {
+      var old = findBy(S.notes, editing);
+      data.createdAt = (old && old.createdAt) || now;
+      ref = db.collection("notes").doc(editing);
+    } else {
+      data.createdAt = now;
+      ref = db.collection("notes").doc();
+    }
+    S.saving = true;
+    $("save").disabled = true;
+    $("form-msg").textContent = "";
+    withRetry(function () { return ref.set(data); }).then(function () {
+      if (!editing) clearDraft();
+      closeSheets();
+      toast(editing ? "直しました" : "保存しました");
+    }).catch(function (e) {
+      $("form-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("save").disabled = false;
+    });
+  }
+
+  function deleteNote() {
+    var id = S.editingId;
+    if (!id || !db || S.saving) return;
+    S.saving = true;
+    $("confirm-yes").disabled = true;
+    withRetry(function () { return db.collection("notes").doc(id).delete(); }).then(function () {
+      closeSheets();
+      toast("消しました");
+    }).catch(function (e) {
+      $("confirm").hidden = true;
+      $("form-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("confirm-yes").disabled = false;
+    });
+  }
+
+  function togglePin(id) {
+    if (!db || S.readOnly || S.pinBusy[id]) return;
+    var n = findBy(S.notes, id);
+    if (!n) return;
+    S.pinBusy[id] = true;
+    withRetry(function () { return db.collection("notes").doc(id).update({ pinned: !n.pinned }); })
+      .catch(function (e) { toast(errorText(e)); })
+      .then(function () { delete S.pinBusy[id]; });
+  }
+
+  function copyText(text) {
+    try {
+      navigator.clipboard.writeText(text).then(function () { toast("コピーしました"); }, function () { toast("コピーできませんでした"); });
+    } catch (e) { toast("コピーできませんでした"); }
+  }
+
+  /* ---------- Categories ---------- */
+  function renderCatSheet() {
+    var list = cats();
+    $("cat-list").innerHTML = list.map(function (c) {
+      var n = countIn(c);
+      return '<li style="--cat:' + catColor(c) + '"><span class="cat-dot"></span><span class="cat-name">' + esc(c) +
+        '</span><span class="cat-n">' + n + '枚</span><button type="button" class="ghost cat-del" data-cat="' + esc(c) + '"' +
+        (n > 0 || list.length <= 1 || S.catBusy ? " disabled" : "") + ' aria-label="' + esc(c) + 'を消す">消す</button></li>';
+    }).join("");
+    $("cat-add").disabled = S.catBusy;
+  }
+
+  function writeCats(list) {
+    if (!db || S.catBusy) return Promise.resolve(false);
+    S.catBusy = true;
+    renderCatSheet();
+    $("cat-msg").textContent = "";
+    return withRetry(function () { return db.doc("meta/categories").set({ list: list }); })
+      .then(function () { S.catsDoc = list.slice(); return true; })
+      .catch(function (e) { $("cat-msg").textContent = errorText(e); return false; })
+      .then(function (ok) { S.catBusy = false; render(); return ok; });
+  }
+
+  function addCat(ev) {
+    ev.preventDefault();
+    var name = $("cat-new").value.trim().slice(0, 10);
+    var list = cats();
+    if (!name) { $("cat-msg").textContent = "分類の名前を書いてください。"; return; }
+    if (name === ALL) { $("cat-msg").textContent = "「すべて」は使えない名前です。"; return; }
+    if (list.indexOf(name) >= 0) { $("cat-msg").textContent = "「" + name + "」はもうあります。"; return; }
+    if (list.length >= 12) { $("cat-msg").textContent = "分類は12個までです。使っていない分類を消してから追加してください。"; return; }
+    writeCats(list.concat([name])).then(function (ok) {
+      if (ok) { $("cat-new").value = ""; toast("「" + name + "」を追加しました"); }
+    });
+  }
+
+  function removeCat(name) {
+    if (countIn(name) > 0) return;
+    var list = cats().filter(function (c) { return c !== name; });
+    if (!list.length) return;
+    writeCats(list).then(function (ok) { if (ok) toast("「" + name + "」を消しました"); });
+  }
+
+  /* ---------- Recipes ---------- */
+  function openRecipe(id) {
+    if (!findBy(S.recipes, id)) return;
+    S.openRecipeId = id;
+    renderDetail();
+    openSheet("rdetail");
+  }
+
+  function renderDetail() {
+    var r = findBy(S.recipes, S.openRecipeId);
+    var box = $("rd-body");
+    if (!r) {
+      box.innerHTML = '<div class="sheet-head"><h2 id="rd-title">見つかりません</h2><button type="button" class="ghost" data-close>閉じる</button></div>';
+      return;
+    }
+    var done = S.checked[r.id] || {};
+    var canWrite = writable();
+    var ings = r.ingredients.map(function (i, k) {
+      var on = !!done[k];
+      return '<li><button type="button" class="ing" data-ing="' + k + '" aria-pressed="' + on + '"><span class="box" aria-hidden="true"></span>' +
+        '<span class="nm">' + esc(i.n) + '</span><span class="am">' + esc(i.a) + "</span></button></li>";
+    }).join("");
+    var steps = r.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("");
+    var srcs = r.sources.map(function (s) {
+      var u = safeUrl(s.url);
+      if (u) return '<li><a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(s.name || hostOf(u)) + "</a></li>";
+      return s.name ? "<li>" + esc(s.name) + "</li>" : "";
+    }).join("");
+    box.innerHTML =
+      '<div class="rd" style="--cat:' + KIND_COLOR[r.kind] + '">' +
+        '<div class="sheet-head"><span class="chip">' + esc(r.kind) + '</span><button type="button" class="ghost" data-close>閉じる</button></div>' +
+        '<h2 class="rd-title" id="rd-title">' + esc(r.title) + "</h2>" +
+        '<div class="meta">' + metaHTML(r) + "</div>" +
+        (ings ? '<section><h3>材料 <small>そろえたものをタップ</small></h3><ul class="ings">' + ings + "</ul></section>" : "") +
+        (steps ? "<section><h3>作り方</h3><ol class=\"steps\">" + steps + "</ol></section>" : "") +
+        (r.tips ? '<section><h3>ポイント</h3><div class="ruled">' + esc(r.tips) + "</div></section>" : "") +
+        (srcs ? '<section><h3>出典</h3><ul class="srcs">' + srcs + "</ul></section>" : "") +
+        '<div class="rd-actions"><button type="button" class="ghost" id="rd-copy">コピー</button>' +
+        (canWrite ? '<button type="button" class="ghost" id="rd-edit">直す</button>' : "") + "</div>" +
+      "</div>";
+  }
+
+  function renderKinds() {
+    $("r-kinds").innerHTML = KINDS.map(function (k) {
+      var on = S.formKind === k;
+      return '<button type="button" class="chip-pick" role="radio" aria-checked="' + on + '" data-kind="' + esc(k) +
+        '" style="--cat:' + KIND_COLOR[k] + '">' + esc(k) + "</button>";
+    }).join("");
+  }
+
+  function openRecipeEditor(id) {
+    if (!writable()) return;
+    var r = id ? findBy(S.recipes, id) : null;
+    if (id && !r) return;
+    S.rEditingId = r ? r.id : null;
+    S.formKind = r ? r.kind : (S.rFilter !== ALL ? S.rFilter : "主菜");
+    $("reditor-title").textContent = r ? "レシピを直す" : "新しいレシピ";
+    $("r-title").value = r ? r.title : "";
+    $("r-serv").value = r ? r.servings : "2人分";
+    $("r-min").value = r ? r.minutes : "";
+    $("r-frozen").checked = r ? r.frozenOk : false;
+    $("r-ing").value = r ? r.ingredients.map(function (i) { return i.n + (i.a ? " " + i.a : ""); }).join("\n") : "";
+    $("r-steps").value = r ? r.steps.join("\n") : "";
+    $("r-tips").value = r ? r.tips : "";
+    $("r-src").value = r ? r.sources.map(function (s) { return [s.name, s.url].filter(Boolean).join(" "); }).join("\n") : "";
+    $("r-msg").textContent = "";
+    $("r-del").hidden = !r;
+    $("r-confirm").hidden = true;
+    $("r-save").disabled = false;
+    renderKinds();
+    S.openRecipeId = null;
+    openSheet("reditor");
+  }
+
+  function saveRecipe(ev) {
+    ev.preventDefault();
+    if (S.saving || !db) return;
+    var title = $("r-title").value.trim();
+    if (!title) { $("r-msg").textContent = "料理の名前を書いてください。"; return; }
+    var now = Date.now();
+    var data = {
+      title: title.slice(0, 60),
+      kind: S.formKind,
+      servings: $("r-serv").value.trim().slice(0, 20),
+      minutes: $("r-min").value.trim().slice(0, 30),
+      frozenOk: $("r-frozen").checked,
+      ingredients: parseIngredients($("r-ing").value),
+      steps: parseSteps($("r-steps").value),
+      tips: $("r-tips").value.replace(/\s+$/, "").slice(0, 3000),
+      sources: parseSources($("r-src").value),
+      updatedAt: now
+    };
+    var editing = S.rEditingId;
+    var ref;
+    if (editing) {
+      var old = findBy(S.recipes, editing);
+      data.createdAt = (old && old.createdAt) || now;
+      ref = db.collection("recipes").doc(editing);
+    } else {
+      data.createdAt = now;
+      ref = db.collection("recipes").doc();
+    }
+    S.saving = true;
+    $("r-save").disabled = true;
+    $("r-msg").textContent = "";
+    withRetry(function () { return ref.set(data); }).then(function () {
+      closeSheets();
+      toast(editing ? "直しました" : "保存しました");
+    }).catch(function (e) {
+      $("r-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("r-save").disabled = false;
+    });
+  }
+
+  function deleteRecipe() {
+    var id = S.rEditingId;
+    if (!id || !db || S.saving) return;
+    S.saving = true;
+    $("r-confirm-yes").disabled = true;
+    withRetry(function () { return db.collection("recipes").doc(id).delete(); }).then(function () {
+      closeSheets();
+      toast("消しました");
+    }).catch(function (e) {
+      $("r-confirm").hidden = true;
+      $("r-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("r-confirm-yes").disabled = false;
+    });
+  }
+
+  /* ---------- Menus (献立) ---------- */
+  function sortedRecipes() {
+    return S.recipes.slice().sort(function (a, b) {
+      var ka = KINDS.indexOf(a.kind), kb = KINDS.indexOf(b.kind);
+      if (ka !== kb) return ka - kb;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+  }
+  function renderMenuItems() {
+    var list = S.mItems;
+    if (!list.length) {
+      $("m-items").innerHTML = '<li class="plain"><span class="nm">まだ何も入っていません。下から追加してください。</span></li>';
+    } else {
+      $("m-items").innerHTML = list.map(function (it, i) {
+        var r = it.id ? findBy(S.recipes, it.id) : null;
+        var name = it.id ? (r ? r.title : "（消したレシピ）") : it.label;
+        var color = r ? KIND_COLOR[r.kind] : "var(--line)";
+        return '<li class="' + (it.id ? "" : "plain") + '" style="--cat:' + color + '">' +
+          (it.id ? '<span class="dot"></span>' : "") +
+          '<span class="nm">' + esc(name) + "</span>" +
+          '<button type="button" data-mup="' + i + '" aria-label="' + esc(name) + 'を上へ"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+          '<button type="button" data-mdown="' + i + '" aria-label="' + esc(name) + 'を下へ"' + (i === list.length - 1 ? " disabled" : "") + ">↓</button>" +
+          '<button type="button" data-mrm="' + i + '" aria-label="' + esc(name) + 'を外す">×</button></li>';
+      }).join("");
+    }
+    var full = list.length >= 12;
+    $("m-pick-add").disabled = full;
+    $("m-label-add").disabled = full;
+  }
+  function renderMenuPick() {
+    var used = {};
+    S.mItems.forEach(function (it) { if (it.id) used[it.id] = true; });
+    $("m-pick").innerHTML = '<option value="">レシピを選ぶ</option>' + sortedRecipes().map(function (r) {
+      return '<option value="' + esc(r.id) + '"' + (used[r.id] ? " disabled" : "") + ">" + esc(r.kind + "｜" + r.title) + "</option>";
+    }).join("");
+  }
+  function openMenuEditor(id) {
+    if (!writable()) return;
+    var m = id ? findBy(S.menus, id) : null;
+    if (id && !m) return;
+    S.mEditingId = m ? m.id : null;
+    S.mItems = m ? m.items.filter(function (it) { return it.id || it.label; }).map(function (it) {
+      return it.id ? { id: it.id } : { label: it.label };
+    }) : [];
+    $("meditor-title").textContent = m ? "献立を直す" : "新しい献立";
+    $("m-title").value = m ? m.title : "";
+    $("m-note").value = m ? m.note : "";
+    $("m-label").value = "";
+    $("m-msg").textContent = "";
+    $("m-del").hidden = !m;
+    $("m-confirm").hidden = true;
+    $("m-save").disabled = false;
+    renderMenuItems();
+    renderMenuPick();
+    openSheet("meditor");
+  }
+  function addMenuRecipe() {
+    var id = $("m-pick").value;
+    if (!id || S.mItems.length >= 12) return;
+    if (S.mItems.some(function (it) { return it.id === id; })) return;
+    S.mItems.push({ id: id });
+    $("m-msg").textContent = "";
+    renderMenuItems();
+    renderMenuPick();
+  }
+  function addMenuLabel() {
+    var label = $("m-label").value.trim().slice(0, 60);
+    if (!label || S.mItems.length >= 12) return;
+    S.mItems.push({ label: label });
+    $("m-label").value = "";
+    $("m-msg").textContent = "";
+    renderMenuItems();
+  }
+  function saveMenu(ev) {
+    ev.preventDefault();
+    if (S.saving || !db) return;
+    var title = $("m-title").value.trim().slice(0, 60);
+    if (!title) { $("m-msg").textContent = "献立の名前を書いてください。"; return; }
+    if (!S.mItems.length) { $("m-msg").textContent = "中身を1つ以上追加してください。"; return; }
+    var editing = S.mEditingId;
+    var old = editing ? findBy(S.menus, editing) : null;
+    var maxOrder = S.menus.reduce(function (a, m) { return Math.max(a, m.order || 0); }, 0);
+    var data = {
+      title: title,
+      note: $("m-note").value.replace(/\s+$/, "").slice(0, 400),
+      order: old ? old.order : maxOrder + 1,
+      items: S.mItems.slice(0, 12).map(function (it) { return it.id ? { id: it.id } : { label: it.label }; }),
+      updatedAt: Date.now()
+    };
+    var ref = editing ? db.collection("menus").doc(editing) : db.collection("menus").doc();
+    S.saving = true;
+    $("m-save").disabled = true;
+    $("m-msg").textContent = "";
+    withRetry(function () { return ref.set(data); }).then(function () {
+      closeSheets();
+      toast(editing ? "直しました" : "保存しました");
+    }).catch(function (e) {
+      $("m-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("m-save").disabled = false;
+    });
+  }
+  function deleteMenu() {
+    var id = S.mEditingId;
+    if (!id || !db || S.saving) return;
+    S.saving = true;
+    $("m-confirm-yes").disabled = true;
+    withRetry(function () { return db.collection("menus").doc(id).delete(); }).then(function () {
+      closeSheets();
+      toast("消しました");
+    }).catch(function (e) {
+      $("m-confirm").hidden = true;
+      $("m-msg").textContent = errorText(e);
+    }).then(function () {
+      S.saving = false;
+      $("m-confirm-yes").disabled = false;
+    });
+  }
+
+  /* ---------- Settings: backup and restore ---------- */
+  var BACKUP_PATH = /^((notes|recipes|menus)\/[\w.~:@+-]{1,120}|meta\/categories)$/;
+  var pendingRestore = null;
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function summaryOf(paths) {
+    var c = { notes: 0, recipes: 0, menus: 0, meta: 0 };
+    paths.forEach(function (p) { var k = p.split("/")[0]; if (k in c) c[k]++; });
+    var parts = [];
+    if (c.notes) parts.push("メモ" + c.notes + "枚");
+    if (c.recipes) parts.push("レシピ" + c.recipes + "品");
+    if (c.menus) parts.push("献立" + c.menus + "つ");
+    if (c.meta) parts.push("分類の設定");
+    return parts.join("・");
+  }
+  function saveFile(name, text) {
+    var blob = new Blob([text], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+  function openSettings() {
+    $("set-who").textContent = S.email ? S.email + " でログインしています。" : "";
+    $("set-msg").textContent = "";
+    pendingRestore = null;
+    $("restore-run").hidden = true;
+    var ok = !!db && !S.denied;
+    $("backup-save").disabled = !ok;
+    $("restore-file").disabled = !ok;
+    openSheet("setsheet");
+  }
+  function backupSave() {
+    if (!db || S.denied) return;
+    var msg = $("set-msg");
+    msg.textContent = "まとめています…";
+    var docs = {};
+    var jobs = ["notes", "recipes", "menus"].map(function (c) {
+      return db.collection(c).get().then(function (q) {
+        q.docs.forEach(function (d) { docs[c + "/" + d.id] = d.data(); });
+      });
+    });
+    jobs.push(db.doc("meta/categories").get().then(function (snap) {
+      if (snap.exists) docs["meta/categories"] = snap.data();
+    }));
+    Promise.all(jobs).then(function () {
+      var t = new Date();
+      var name = "kaji-memo-backup-" + t.getFullYear() + pad2(t.getMonth() + 1) + pad2(t.getDate()) + ".json";
+      saveFile(name, JSON.stringify({ app: "kaji-memo", version: 1, exportedAt: t.toISOString(), docs: docs }, null, 1));
+      var sum = summaryOf(Object.keys(docs));
+      msg.textContent = (sum || "空の家事メモ") + "を保存しました。";
+    }).catch(function () {
+      msg.textContent = "バックアップを作れませんでした。通信の状態を確かめて、もう一度押してください。";
+    });
+  }
+  function restorePrepare(file) {
+    var msg = $("set-msg"), run = $("restore-run");
+    pendingRestore = null;
+    run.hidden = true;
+    if (!file) return;
+    file.text().then(function (text) {
+      var j = JSON.parse(text);
+      if (j && j.app === "futari-kakeibo") throw new Error("kakeibo");
+      if (!j || typeof j !== "object" || !j.docs || typeof j.docs !== "object" || Array.isArray(j.docs)) throw new Error("format");
+      var items = [];
+      Object.keys(j.docs).forEach(function (path) {
+        var data = j.docs[path];
+        if (!BACKUP_PATH.test(path) || !data || typeof data !== "object" || Array.isArray(data)) return;
+        items.push({ path: path, data: data });
+      });
+      if (!items.length) throw new Error("empty");
+      pendingRestore = items;
+      msg.textContent = summaryOf(items.map(function (x) { return x.path; })) + "が入っています。\n「読み込む」を押すと家事メモに入れます。同じものはファイルの内容で上書きされます。";
+      run.hidden = false;
+    }).catch(function (e) {
+      msg.textContent = e && e.message === "kakeibo"
+        ? "これは家計簿のバックアップです。家計簿のアプリの設定から読み込んでください。"
+        : "このファイルは読み込めませんでした。家事メモのバックアップか、引っ越し用のファイル（.json）か確かめてください。";
+    }).then(function () {
+      $("restore-file").value = "";
+    });
+  }
+  function restoreRun() {
+    if (!pendingRestore || !db) return;
+    var msg = $("set-msg"), run = $("restore-run");
+    var items = pendingRestore;
+    run.disabled = true;
+    msg.textContent = "読み込んでいます…";
+    db.setMany(items, function (done) {
+      msg.textContent = "読み込んでいます… " + done + " / " + items.length;
+    }).then(function () {
+      msg.textContent = summaryOf(items.map(function (x) { return x.path; })) + "を読み込みました。";
+      run.hidden = true;
+      pendingRestore = null;
+      toast("読み込みました");
+    }).catch(function (e) {
+      msg.textContent = errorText(e);
+    }).then(function () {
+      run.disabled = false;
+    });
+  }
+  function logout() {
+    if (!auth) { location.reload(); return; }
+    $("logout").disabled = true;
+    signOut(auth).catch(function () {
+      $("logout").disabled = false;
+      $("set-msg").textContent = "ログアウトできませんでした。もう一度押してください。";
+    });
+  }
+
+  /* ---------- Login ---------- */
+  function loginErrorText(e) {
+    var c = (e && e.code) || "";
+    if (/invalid-credential|wrong-password|user-not-found|invalid-email|invalid-login/.test(c)) return "メールアドレスかパスワードが違います。";
+    if (/too-many-requests/.test(c)) return "続けて失敗したため、しばらくログインできません。時間をおいてから試してください。";
+    if (/network-request-failed/.test(c)) return "通信できませんでした。電波やWi-Fiを確かめてください。";
+    if (/user-disabled/.test(c)) return "このアカウントは使えなくなっています。";
+    return "ログインできませんでした。もう一度試してください。";
+  }
+  function doLogin(ev) {
+    ev.preventDefault();
+    if (!auth) return;
+    var email = $("login-email").value.trim(), pass = $("login-pass").value;
+    var msg = $("login-msg"), btn = $("login-btn");
+    msg.textContent = "";
+    if (!email || !pass) { msg.textContent = "メールアドレスとパスワードを入れてください。"; return; }
+    btn.disabled = true;
+    signInWithEmailAndPassword(auth, email, pass).catch(function (e) {
+      msg.textContent = loginErrorText(e);
+    }).then(function () { btn.disabled = false; });
+  }
+  function doForgot() {
+    if (!auth) return;
+    var email = $("login-email").value.trim();
+    var msg = $("login-msg");
+    if (!email) { msg.textContent = "先にメールアドレスを入れてから押してください。"; return; }
+    sendPasswordResetEmail(auth, email).then(function () {
+      msg.textContent = "パスワードを決め直すためのメールを送りました。届かないときは、迷惑メールのフォルダも見てください。";
+    }, function (e) { msg.textContent = loginErrorText(e); });
+  }
+  function showLogin(message) {
+    $("login").hidden = false;
+    if (message) {
+      $("login-lead").textContent = message;
+      $("login-fields").hidden = true;
+      $("login-btn").hidden = true;
+      $("forgot-btn").hidden = true;
+    }
+  }
+
+  /* ---------- Events ---------- */
+  $("v-tips").addEventListener("click", function () { setView("tips"); });
+  $("v-recipes").addEventListener("click", function () { setView("recipes"); });
+  window.addEventListener("hashchange", function () { var v = readHash(); if (v !== S.view) { S.view = v; render(); } });
+
+  $("q").addEventListener("input", function (e) {
+    if (S.view === "tips") S.q = e.target.value; else S.rq = e.target.value;
+    renderMenus();
+    renderList();
+  });
+
+  $("tabs").addEventListener("click", function (e) {
+    var t = e.target.closest("button");
+    if (!t) return;
+    if (t.id === "open-cats") {
+      $("cat-msg").textContent = "";
+      renderCatSheet();
+      openSheet("catsheet");
+      return;
+    }
+    var c = t.getAttribute("data-cat");
+    var k = t.getAttribute("data-kind");
+    if (c) { S.filter = c; renderTabs(); renderList(); }
+    if (k) { S.rFilter = k; renderTabs(); renderList(); }
+  });
+
+  $("frozen-only").addEventListener("click", function () {
+    S.frozenOnly = !S.frozenOnly;
+    renderTabs();
+    renderList();
+  });
+
+  $("menus").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-medit]");
+    if (ed) { openMenuEditor(ed.getAttribute("data-medit")); return; }
+    if (e.target.closest("[data-madd]")) { openMenuEditor(null); return; }
+    var b = e.target.closest("[data-open]");
+    if (b) openRecipe(b.getAttribute("data-open"));
+  });
+
+  $("list").addEventListener("click", function (e) {
+    var open = e.target.closest("[data-open]");
+    if (open) { openRecipe(open.getAttribute("data-open")); return; }
+    var b = e.target.closest("[data-act]");
+    if (!b) return;
+    var card = b.closest(".note");
+    if (!card) return;
+    var id = card.getAttribute("data-id");
+    var act = b.getAttribute("data-act");
+    if (act === "edit") openEditor(id);
+    else if (act === "pin") togglePin(id);
+    else if (act === "copy") {
+      var n = findBy(S.notes, id);
+      if (n) copyText([n.title, n.body].filter(Boolean).join("\n"));
+    }
+  });
+
+  $("add").addEventListener("click", function () {
+    if (S.view === "tips") openEditor(null); else openRecipeEditor(null);
+  });
+  $("scrim").addEventListener("click", closeSheets);
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-close]")) closeSheets();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$("scrim").hidden) closeSheets();
+  });
+
+  $("f-cats").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cat]");
+    if (!b) return;
+    S.formCat = b.getAttribute("data-cat");
+    renderFormCats();
+    saveDraft();
+  });
+  var draftTimer = null;
+  function queueDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); }
+  $("f-title").addEventListener("input", queueDraft);
+  $("f-body").addEventListener("input", queueDraft);
+  $("f-pin").addEventListener("change", saveDraft);
+
+  $("form").addEventListener("submit", saveNote);
+  $("del").addEventListener("click", function () { $("confirm").hidden = false; });
+  $("confirm-no").addEventListener("click", function () { $("confirm").hidden = true; });
+  $("confirm-yes").addEventListener("click", deleteNote);
+
+  $("cat-form").addEventListener("submit", addCat);
+  $("cat-list").addEventListener("click", function (e) {
+    var b = e.target.closest(".cat-del");
+    if (b && !b.disabled) removeCat(b.getAttribute("data-cat"));
+  });
+
+  $("rd-body").addEventListener("click", function (e) {
+    var ing = e.target.closest("[data-ing]");
+    if (ing && S.openRecipeId) {
+      var k = ing.getAttribute("data-ing");
+      var m = S.checked[S.openRecipeId] || (S.checked[S.openRecipeId] = {});
+      m[k] = !m[k];
+      ing.setAttribute("aria-pressed", String(!!m[k]));
+      return;
+    }
+    if (e.target.closest("#rd-copy")) {
+      var r = findBy(S.recipes, S.openRecipeId);
+      if (r) copyText(recipeText(r));
+      return;
+    }
+    if (e.target.closest("#rd-edit")) {
+      var id = S.openRecipeId;
+      openRecipeEditor(id);
+    }
+  });
+
+  $("r-kinds").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-kind]");
+    if (!b) return;
+    S.formKind = b.getAttribute("data-kind");
+    renderKinds();
+  });
+  $("rform").addEventListener("submit", saveRecipe);
+  $("r-del").addEventListener("click", function () { $("r-confirm").hidden = false; });
+  $("r-confirm-no").addEventListener("click", function () { $("r-confirm").hidden = true; });
+  $("r-confirm-yes").addEventListener("click", deleteRecipe);
+
+  $("open-set").addEventListener("click", openSettings);
+  $("backup-save").addEventListener("click", backupSave);
+  $("restore-file").addEventListener("change", function (e) { restorePrepare(e.target.files && e.target.files[0]); });
+  $("restore-run").addEventListener("click", restoreRun);
+  $("logout").addEventListener("click", logout);
+
+  $("mform").addEventListener("submit", saveMenu);
+  $("m-pick-add").addEventListener("click", addMenuRecipe);
+  $("m-label-add").addEventListener("click", addMenuLabel);
+  $("m-label").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addMenuLabel(); }
+  });
+  $("m-items").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b || b.disabled) return;
+    var list = S.mItems, i, t;
+    if (b.hasAttribute("data-mup")) {
+      i = Number(b.getAttribute("data-mup"));
+      if (i > 0) { t = list[i - 1]; list[i - 1] = list[i]; list[i] = t; }
+    } else if (b.hasAttribute("data-mdown")) {
+      i = Number(b.getAttribute("data-mdown"));
+      if (i < list.length - 1) { t = list[i + 1]; list[i + 1] = list[i]; list[i] = t; }
+    } else if (b.hasAttribute("data-mrm")) {
+      i = Number(b.getAttribute("data-mrm"));
+      list.splice(i, 1);
+    } else return;
+    renderMenuItems();
+    renderMenuPick();
+  });
+  $("m-del").addEventListener("click", function () { $("m-confirm").hidden = false; });
+  $("m-confirm-no").addEventListener("click", function () { $("m-confirm").hidden = true; });
+  $("m-confirm-yes").addEventListener("click", deleteMenu);
+
+  $("login-form").addEventListener("submit", doLogin);
+  $("forgot-btn").addEventListener("click", doForgot);
+
+  /* ---------- Start ---------- */
+  function onListenErr(err) {
+    clearTimeout(slowTimer);
+    S.loaded = true;
+    S.rLoaded = true;
+    S.listenErr = (err && err.code) || "unavailable";
+    if (S.listenErr === "invalid_argument") S.denied = true;
+    render();
+  }
+  function maybeDone() {
+    if (S.loaded && S.rLoaded) { S.slow = false; clearTimeout(slowTimer); }
+  }
+
+  function subscribe() {
+    db.collection("notes").onSnapshot(function (snap) {
+      S.notes = snap.docs.map(function (d) {
+        var v = d.data() || {};
+        return {
+          id: d.id,
+          title: str(v.title, 200),
+          body: str(v.body, 8000),
+          cat: cleanCat(v.cat),
+          pinned: v.pinned === true,
+          createdAt: Number(v.createdAt) || 0
+        };
+      });
+      if (!snap.metadata.fromCache) { S.loaded = true; maybeDone(); }
+      render();
+    }, onListenErr);
+
+    db.collection("recipes").onSnapshot(function (snap) {
+      S.recipes = snap.docs.map(function (d) {
+        var v = d.data() || {};
+        return {
+          id: d.id,
+          title: str(v.title, 100),
+          kind: cleanKind(v.kind),
+          servings: str(v.servings, 30),
+          minutes: str(v.minutes, 40),
+          frozenOk: v.frozenOk === true,
+          ingredients: (Array.isArray(v.ingredients) ? v.ingredients : []).slice(0, 80).map(function (i) {
+            return { n: str(i && i.n, 80), a: str(i && i.a, 60) };
+          }).filter(function (i) { return i.n; }),
+          steps: (Array.isArray(v.steps) ? v.steps : []).slice(0, 50).map(function (s) { return str(s, 600); }).filter(Boolean),
+          tips: str(v.tips, 4000),
+          sources: (Array.isArray(v.sources) ? v.sources : []).slice(0, 10).map(function (s) {
+            return { name: str(s && s.name, 100), url: str(s && s.url, 600) };
+          }),
+          createdAt: Number(v.createdAt) || 0
+        };
+      });
+      if (!snap.metadata.fromCache) { S.rLoaded = true; maybeDone(); }
+      render();
+    }, onListenErr);
+
+    db.collection("menus").onSnapshot(function (snap) {
+      S.menus = snap.docs.map(function (d) {
+        var v = d.data() || {};
+        return {
+          id: d.id,
+          title: str(v.title, 80),
+          note: str(v.note, 400),
+          order: Number(v.order) || 0,
+          items: (Array.isArray(v.items) ? v.items : []).slice(0, 12).map(function (it) {
+            return { id: str(it && it.id, 100), label: str(it && it.label, 60) };
+          })
+        };
+      }).sort(function (a, b) { return a.order - b.order; });
+      render();
+    }, function () { /* menus are optional */ });
+
+    db.doc("meta/categories").onSnapshot(function (s) {
+      var v = s.exists ? s.data() : null;
+      S.catsDoc = (v && Array.isArray(v.list))
+        ? v.list.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return x.trim().slice(0, 20); })
+        : null;
+      render();
+    }, function () { /* categories fall back to the defaults */ });
+  }
+
+  function startApp(api, email) {
+    db = api;
+    S.email = email || "";
+    S.dbState = "ok";
+    $("login").hidden = true;
+    slowTimer = setTimeout(function () {
+      if (!S.loaded || !S.rLoaded) { S.slow = true; render(); }
+    }, 10000);
+    render();
+    subscribe();
+  }
+
+  /* ---------- Firebase (same shape as the Claude version's db) ---------- */
+  function mapFsError(e) {
+    var code = (e && e.code) || "";
+    var message = String(e && e.message);
+    if (code === "permission-denied" || code === "unauthenticated") return { code: "invalid_argument", message: message };
+    if (code === "resource-exhausted") return { code: "quota_exceeded", message: message };
+    if (code === "invalid-argument") return { code: "bad_data", message: message };
+    return { code: "unavailable", message: message };
+  }
+  // 電波が弱いときも画面を止めない：2秒で返事がなければ先に進み（端末に控えてあとで送られる）、失敗したら知らせる
+  function settle(p) {
+    var err = null;
+    return Promise.race([
+      p.then(function () { return "ok"; }, function (e) { err = e; return "err"; }),
+      wait(2000).then(function () { return "slow"; })
+    ]).then(function (r) {
+      if (r === "err") throw err;
+      if (r === "slow") p.catch(function (e) { toast(errorText(e)); });
+    });
+  }
+  function wrapDocSnap(snap) {
+    return {
+      id: snap.id,
+      exists: snap.exists(),
+      data: function () { return snap.data(); },
+      metadata: { fromCache: snap.metadata.fromCache, hasPendingWrites: snap.metadata.hasPendingWrites }
+    };
+  }
+  function makeDb(fs, base) {
+    var full = function (path) { return base + "/" + path; };
+    var wrapErr = function (p) { return p.catch(function (e) { throw mapFsError(e); }); };
+    var opts = { includeMetadataChanges: true };
+    function docApi(ref) {
+      return {
+        id: ref.id,
+        get: function () { return wrapErr(getDoc(ref).then(wrapDocSnap)); },
+        set: function (data) { return settle(wrapErr(setDoc(ref, data))); },
+        update: function (data) { return settle(wrapErr(setDoc(ref, data, { merge: true }))); },
+        delete: function () { return settle(wrapErr(deleteDoc(ref))); },
+        onSnapshot: function (next, err) {
+          return onSnapshot(ref, opts, function (snap) { next(wrapDocSnap(snap)); }, function (e) { if (err) err(mapFsError(e)); });
+        }
+      };
+    }
+    function collApi(ref) {
+      return {
+        doc: function (id) { return docApi(id ? doc(ref, id) : doc(ref)); },
+        get: function () {
+          return wrapErr(getDocs(ref).then(function (q) { return { docs: q.docs.map(wrapDocSnap), size: q.size, empty: q.empty }; }));
+        },
+        onSnapshot: function (next, err) {
+          return onSnapshot(ref, opts, function (q) {
+            next({ docs: q.docs.map(wrapDocSnap), size: q.size, empty: q.empty, metadata: { fromCache: q.metadata.fromCache, hasPendingWrites: q.metadata.hasPendingWrites } });
+          }, function (e) { if (err) err(mapFsError(e)); });
+        }
+      };
+    }
+    return {
+      doc: function (path) { return docApi(doc(fs, full(path))); },
+      collection: function (path) { return collApi(collection(fs, full(path))); },
+      setMany: function (items, onProgress) {
+        var i = 0;
+        function step() {
+          if (i >= items.length) return Promise.resolve();
+          var b = writeBatch(fs);
+          var chunk = items.slice(i, i + 400);
+          chunk.forEach(function (it) { b.set(doc(fs, full(it.path)), it.data); });
+          return wrapErr(b.commit()).then(function () {
+            i += chunk.length;
+            if (onProgress) onProgress(i);
+            return step();
+          });
+        }
+        return step();
+      }
+    };
+  }
+
+  function init() {
+    S.view = readHash();
+    render();
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(function () { /* なくても動く */ });
+    }
+    // 動作確認用：テストのときだけ、見本のデータ置き場を使う
+    var test = window.__KAJI_TEST__;
+    if (test) { startApp(test.db, test.email); return; }
+    if (!firebaseConfig || !firebaseConfig.apiKey || /ここに/.test(String(firebaseConfig.apiKey))) {
+      S.dbState = "none";
+      render();
+      showLogin("まだFirebaseの設定が入っていません。config.js に、Firebaseの画面でコピーした設定を貼り付けてください。");
+      return;
+    }
+    var app;
+    try { app = initializeApp(firebaseConfig); }
+    catch (e) {
+      S.dbState = "none";
+      render();
+      showLogin("Firebaseの設定が読み込めませんでした。config.js の中身を確かめてください。");
+      return;
+    }
+    var fs;
+    try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+    catch (e) { fs = initializeFirestore(app, {}); }
+    auth = getAuth(app);
+    var started = false;
+    onAuthStateChanged(auth, function (u) {
+      if (u && !started) { started = true; startApp(makeDb(fs, "kaji/data"), u.email); }
+      else if (!u) { if (started) location.reload(); else showLogin(); }
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>
