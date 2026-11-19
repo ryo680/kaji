@@ -132,7 +132,7 @@ button { cursor: pointer; }
 /* View switch: コツ / レシピ */
 .views {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
@@ -795,6 +795,29 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
   color: inherit;
 }
 .row select:focus { outline: none; border-color: var(--c0); }
+
+/* ---------- v2: かれんさんの印、買い物リスト、貼り付け ---------- */
+.who-tag { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.6; }
+.who-tag.karen { background: var(--c5); color: var(--card); }
+.who-tag.research { border: 1.5px solid var(--line); color: var(--ink-soft); }
+.shop-add { margin: 0; }
+.shop-add input { flex: 1; min-width: 0; }
+.shop-card { background: var(--card); border-radius: 6px; box-shadow: var(--shadow); padding: 4px 14px 6px; }
+.shop-list li:last-child .ing { border-bottom: 0; }
+.shop-list .ing { align-items: flex-start; }
+.shop-list .ing .box { align-self: flex-start; margin-top: 3px; }
+.shop-list .nm b { font-weight: 700; }
+.shop-am { margin-left: 10px; font-variant-numeric: tabular-nums; }
+.shop-from { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--ink-soft); }
+.shop-tools { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.menu-shop { align-self: flex-start; margin-top: 4px; }
+.pick-group h3 { margin: 10px 0 2px; font-size: 16px; }
+.ing.pick[aria-pressed="true"] .nm, .ing.pick[aria-pressed="true"] .am { color: inherit; text-decoration: none; }
+.ing.pick[aria-pressed="false"] .nm, .ing.pick[aria-pressed="false"] .am { color: var(--ink-soft); }
+.ing.pick[aria-pressed="true"] .box { background: var(--accent); border-color: var(--accent); }
+.paste-text { width: 100%; min-height: 96px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--field); padding: 10px; font: inherit; font-size: 14px; color: inherit; resize: vertical; }
+.paste-text:focus { outline: none; border-color: var(--c0); }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -834,9 +857,10 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
   <div class="views" role="group" aria-label="表示の切り替え">
     <button type="button" class="view-btn" id="v-tips" aria-pressed="true">コツ <span class="n" id="v-tips-n"></span></button>
     <button type="button" class="view-btn" id="v-recipes" aria-pressed="false">レシピ <span class="n" id="v-recipes-n"></span></button>
+    <button type="button" class="view-btn" id="v-shop" aria-pressed="false">買い物 <span class="n" id="v-shop-n"></span></button>
   </div>
 
-  <label class="search" for="q">
+  <label class="search" for="q" id="search-box">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
     <span class="sr">探す</span>
     <input id="q" type="search" placeholder="メモを探す（例：タオル、ごはん）" autocomplete="off" enterkeyhint="search">
@@ -851,6 +875,11 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
       冷凍のまま作れるものだけ
     </button>
   </div>
+
+  <form class="row shop-add" id="shop-form" novalidate hidden>
+    <input id="shop-new" maxlength="60" placeholder="買うものを追加（例：牛乳）" autocomplete="off" aria-label="買うもの" enterkeyhint="done">
+    <button type="submit" class="ghost">追加</button>
+  </form>
 
   <p class="status" id="status" role="status" hidden></p>
 
@@ -888,6 +917,10 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
     <label class="check" for="f-pin">
       <input type="checkbox" id="f-pin">
       大事なメモとして一番上に出す
+    </label>
+    <label class="check" for="f-karen">
+      <input type="checkbox" id="f-karen">
+      かれんさんから聞いたこと
     </label>
     <p class="form-msg" id="form-msg" role="alert"></p>
     <div class="sheet-actions">
@@ -960,6 +993,10 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
       <input type="checkbox" id="r-frozen">
       冷凍の食材を凍ったまま使える
     </label>
+    <label class="check" for="r-karen">
+      <input type="checkbox" id="r-karen">
+      かれんさんから聞いたレシピ
+    </label>
     <label class="field" for="r-ing">
       <span>材料 <small>（1行に1つ。「材料名 分量」の形で）</small></span>
       <textarea id="r-ing" class="short" placeholder="例：&#10;鮭 2切れ&#10;しめじ 1/2パック"></textarea>
@@ -1000,6 +1037,15 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
     </div>
     <p class="hint" id="set-who"></p>
     <section class="set-sec">
+      <h3>最初に開く画面</h3>
+      <p class="hint">この端末でアプリを開いたときに、最初に出す画面です。</p>
+      <div class="chips" id="start-view" role="radiogroup" aria-label="最初に開く画面">
+        <button type="button" class="chip-pick" role="radio" aria-checked="false" data-start="tips" style="--cat:var(--ink)">コツ</button>
+        <button type="button" class="chip-pick" role="radio" aria-checked="false" data-start="recipes" style="--cat:var(--ink)">レシピ</button>
+        <button type="button" class="chip-pick" role="radio" aria-checked="false" data-start="shop" style="--cat:var(--ink)">買い物</button>
+      </div>
+    </section>
+    <section class="set-sec">
       <h3>バックアップを保存</h3>
       <p class="hint">メモ・レシピ・献立を、1つのファイル（.json）にまとめて保存します。ファイルは自分の端末やiCloud Driveに置き、GitHubなど人から見える場所には置かないでください。</p>
       <button type="button" class="ghost" id="backup-save">バックアップを保存</button>
@@ -1009,9 +1055,18 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
       <p class="hint">バックアップや、引っ越し用のファイル（.json）を読み込みます。同じメモ・レシピはファイルの内容で上書きされ、ほかのものはそのまま残ります。</p>
       <label class="ghost filebtn" for="restore-file">ファイルを選ぶ</label>
       <input type="file" id="restore-file" class="sr" accept=".json,application/json">
-      <button type="button" class="primary" id="restore-run" hidden>読み込む</button>
+    </section>
+    <section class="set-sec">
+      <h3>文字を貼って読み込む</h3>
+      <p class="hint">チャットでもらった追加用の文字（{"app":"kaji-memo" で始まるもの）を、ここに貼り付けます。</p>
+      <textarea id="paste-text" class="paste-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="追加用の文字"></textarea>
+      <div class="row-btns">
+        <button type="button" class="ghost" id="paste-clip">コピーした文字を貼る</button>
+        <button type="button" class="ghost" id="paste-check">中身を確かめる</button>
+      </div>
     </section>
     <p class="set-msg" id="set-msg" role="status" aria-live="polite"></p>
+    <button type="button" class="primary" id="restore-run" hidden>読み込む</button>
     <section class="set-sec">
       <button type="button" class="ghost" id="logout">ログアウト</button>
     </section>
@@ -1058,6 +1113,22 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
       </div>
     </div>
   </form>
+</section>
+
+<!-- Shopping picker -->
+<section class="sheet" id="shopsheet" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="shop-title">買い物リストに入れる</h2>
+      <button type="button" class="ghost" data-close>やめる</button>
+    </div>
+    <p class="hint">家にあるものはタップして外してください。</p>
+    <div id="shop-pick"></div>
+    <p class="form-msg" id="shop-msg" role="alert"></p>
+    <div class="sheet-actions">
+      <button type="button" class="primary" id="shop-pick-save">入れる</button>
+    </div>
+  </div>
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1108,8 +1179,17 @@ import { firebaseConfig } from "./config.js";
     email: "",
     denied: false,
     mEditingId: null,
-    mItems: []
+    mItems: [],
+    shop: [],
+    sLoaded: false,
+    shopArm: false,
+    pick: []
   };
+  var START_KEY = "kaji-memo.start";
+  function startPref() {
+    try { var v = localStorage.getItem(START_KEY); return v === "recipes" || v === "shop" ? v : "tips"; }
+    catch (e) { return "tips"; }
+  }
   var db = null;
   var auth = null;
   var slowTimer = null;
@@ -1201,7 +1281,8 @@ import { firebaseConfig } from "./config.js";
     if (S.editingId) return;
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        title: $("f-title").value, body: $("f-body").value, cat: S.formCat, pinned: $("f-pin").checked
+        title: $("f-title").value, body: $("f-body").value, cat: S.formCat, pinned: $("f-pin").checked,
+        fromKaren: $("f-karen").checked
       }));
     } catch (e) { /* storage unavailable */ }
   }
@@ -1275,26 +1356,35 @@ import { firebaseConfig } from "./config.js";
     return list;
   }
 
+  function shopLeft() { return S.shop.filter(function (x) { return !x.checked; }).length; }
   function renderHeader() {
-    var tips = S.view === "tips";
-    $("sub").textContent = tips ? "教えてもらった洗濯・料理・掃除のコツ" : "2人分で作れる、かんたんレシピと献立";
+    var tips = S.view === "tips", shop = S.view === "shop";
+    var left = shopLeft();
+    $("sub").textContent = tips ? "教えてもらった洗濯・料理・掃除のコツ" : shop ? "買うもののリスト" : "2人分で作れる、かんたんレシピと献立";
     $("count").innerHTML = tips
       ? (S.notes.length ? "<b>" + S.notes.length + "</b>枚" : "")
+      : shop ? (left ? "<b>" + left + "</b>品" : "")
       : (S.recipes.length ? "<b>" + S.recipes.length + "</b>品" : "");
     $("v-tips").setAttribute("aria-pressed", String(tips));
-    $("v-recipes").setAttribute("aria-pressed", String(!tips));
+    $("v-recipes").setAttribute("aria-pressed", String(S.view === "recipes"));
+    $("v-shop").setAttribute("aria-pressed", String(shop));
     $("v-tips-n").textContent = S.notes.length ? S.notes.length : "";
     $("v-recipes-n").textContent = S.recipes.length ? S.recipes.length : "";
+    $("v-shop-n").textContent = left ? left : "";
+    $("search-box").hidden = shop;
+    $("shop-form").hidden = !shop || !writable();
     var q = $("q");
     q.placeholder = tips ? "メモを探す（例：タオル、ごはん）" : "レシピを探す（例：しゃけ、しめじ）";
     var want = tips ? S.q : S.rq;
     if (q.value !== want) q.value = want;
     $("add-label").textContent = tips ? "メモを書く" : "レシピを書く";
-    $("filter-row").hidden = tips;
+    $("filter-row").hidden = S.view !== "recipes";
   }
 
   function renderTabs() {
     var html;
+    $("tabs").hidden = S.view === "shop";
+    if (S.view === "shop") { $("tabs").innerHTML = ""; return; }
     if (S.view === "tips") {
       var list = cats();
       if (S.filter !== ALL && list.indexOf(S.filter) < 0) S.filter = ALL;
@@ -1325,8 +1415,8 @@ import { firebaseConfig } from "./config.js";
   function renderStatus() {
     var el = $("status");
     var msg = "";
-    var loaded = S.view === "tips" ? S.loaded : S.rLoaded;
-    var has = S.view === "tips" ? S.notes.length : S.recipes.length;
+    var loaded = S.view === "tips" ? S.loaded : S.view === "shop" ? S.sLoaded : S.rLoaded;
+    var has = S.view === "tips" ? S.notes.length : S.view === "shop" ? S.shop.length : S.recipes.length;
     if (S.dbState === "none") {
       msg = "";
     } else if (S.denied) {
@@ -1356,11 +1446,17 @@ import { firebaseConfig } from "./config.js";
   var PEOPLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16 14.2c2.8.3 5 2.6 5 5.8"></path></svg>';
   var SNOW = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"></path></svg>';
 
+  function whoTag(x) {
+    if (x.fromKaren) return '<span class="who-tag karen">かれんさんから</span>';
+    if (x.sources && x.sources.length) return '<span class="who-tag research">調べたもの</span>';
+    return "";
+  }
+
   function noteHTML(n) {
     var canWrite = writable();
     var pinLabel = n.pinned ? "大事なメモから外す" : "大事なメモにする";
     return '<article class="note" data-id="' + esc(n.id) + '" style="--cat:' + catColor(n.cat) + '">' +
-      '<div class="note-head"><span class="chip">' + esc(n.cat) + '</span><span class="date">' + esc(fmtDate(n.createdAt)) + "</span>" +
+      '<div class="note-head"><span class="chip">' + esc(n.cat) + "</span>" + whoTag(n) + '<span class="date">' + esc(fmtDate(n.createdAt)) + "</span>" +
       '<button type="button" class="pin" data-act="pin" aria-pressed="' + n.pinned + '" aria-label="' + pinLabel + '"' + (canWrite ? "" : " disabled") + ">" + STAR(n.pinned) + "</button></div>" +
       '<h2 class="note-title">' + (n.title ? esc(n.title) : "（タイトルなし）") + "</h2>" +
       (n.body ? '<div class="note-body">' + esc(n.body) + "</div>" : "") +
@@ -1381,7 +1477,7 @@ import { firebaseConfig } from "./config.js";
     var names = r.ingredients.map(function (i) { return i.n; });
     var sum = names.slice(0, 6).join("・") + (names.length > 6 ? " ほか" : "");
     return '<article class="note" data-rid="' + esc(r.id) + '" style="--cat:' + KIND_COLOR[r.kind] + '">' +
-      '<div class="note-head"><span class="chip">' + esc(r.kind) + "</span></div>" +
+      '<div class="note-head"><span class="chip">' + esc(r.kind) + "</span>" + whoTag(r) + "</div>" +
       '<h2 class="note-title"><button type="button" class="rcard-open" data-open="' + esc(r.id) + '">' + esc(r.title || "（名前なし）") + "</button></h2>" +
       '<div class="meta">' + metaHTML(r) + "</div>" +
       (sum ? '<p class="ing-sum">材料：' + esc(sum) + "</p>" : "") +
@@ -1406,7 +1502,10 @@ import { firebaseConfig } from "./config.js";
       }).join("");
       return '<article class="menu"><div class="menu-head"><h3>' + esc(m.title) + "</h3>" +
         (w ? '<button type="button" class="act" data-medit="' + esc(m.id) + '" aria-label="献立「' + esc(m.title) + '」を直す">直す</button>' : "") +
-        "</div>" + (m.note ? "<p>" + esc(m.note) + "</p>" : "") + "<ul>" + items + "</ul></article>";
+        "</div>" + (m.note ? "<p>" + esc(m.note) + "</p>" : "") + "<ul>" + items + "</ul>" +
+        (w && m.items.some(function (it) { return it.id && findBy(S.recipes, it.id); })
+          ? '<button type="button" class="act menu-shop" data-mshop="' + esc(m.id) + '">材料を買い物リストへ</button>' : "") +
+        "</article>";
     }).join("");
     if (canAdd) cards += '<button type="button" class="menu menu-add" data-madd="1">＋ 献立を作る</button>';
     var n = S.menus.length + (canAdd ? 1 : 0);
@@ -1414,9 +1513,34 @@ import { firebaseConfig } from "./config.js";
     el.hidden = false;
   }
 
+  function renderShop(el) {
+    if (!S.shop.length) {
+      if (!S.sLoaded) { el.innerHTML = S.slow ? "" : blankHTML("読み込み中", "買い物リストを取り出しています。"); return; }
+      if (S.listenErr) { el.innerHTML = ""; return; }
+      el.innerHTML = blankHTML("買い物リストは空です", "レシピや献立の「材料を買い物リストへ」から入れるか、上の欄に書いて追加できます。");
+      return;
+    }
+    var w = writable();
+    var list = S.shop.slice().sort(function (a, b) {
+      if (a.checked !== b.checked) return a.checked ? 1 : -1;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+    var done = list.length - shopLeft();
+    el.innerHTML = '<div class="shop-card"><ul class="ings shop-list">' + list.map(function (it) {
+      return '<li><button type="button" class="ing" data-sid="' + esc(it.id) + '" aria-pressed="' + it.checked + '"' + (w ? "" : " disabled") + ">" +
+        '<span class="box" aria-hidden="true"></span><span class="nm"><b>' + esc(it.name) + "</b>" +
+        (it.amount ? '<span class="shop-am">' + esc(it.amount) + "</span>" : "") +
+        (it.from ? '<small class="shop-from">' + esc(it.from) + "</small>" : "") + "</span></button></li>";
+    }).join("") + "</ul></div>" +
+      (w ? '<div class="shop-tools">' +
+        (done ? '<button type="button" class="ghost" id="shop-clear-done">買ったものを消す（' + done + "）</button>" : "") +
+        '<button type="button" class="ghost" id="shop-clear-all">' + (S.shopArm ? "もう一度押すと全部消します" : "全部消す") + "</button></div>" : "");
+  }
+
   function renderList() {
     var el = $("list");
     if (S.dbState === "none") { el.innerHTML = ""; return; }
+    if (S.view === "shop") { renderShop(el); return; }
     if (S.view === "tips") {
       if (!S.notes.length) {
         if (!S.loaded) { el.innerHTML = S.slow ? "" : blankHTML("読み込み中", "メモを取り出しています。"); return; }
@@ -1452,7 +1576,7 @@ import { firebaseConfig } from "./config.js";
 
   function renderFab() {
     var fab = $("add");
-    fab.hidden = S.readOnly || S.denied;
+    fab.hidden = S.readOnly || S.denied || S.view === "shop";
     fab.disabled = S.dbState !== "ok";
   }
 
@@ -1469,11 +1593,16 @@ import { firebaseConfig } from "./config.js";
   }
 
   /* ---------- Views ---------- */
-  function readHash() { return location.hash === "#recipes" ? "recipes" : "tips"; }
+  function readHash() {
+    if (location.hash === "#recipes") return "recipes";
+    if (location.hash === "#shop") return "shop";
+    if (location.hash === "#tips") return "tips";
+    return null;
+  }
   function setView(v) {
     if (S.view === v) return;
     S.view = v;
-    var h = v === "recipes" ? "#recipes" : "#tips";
+    var h = "#" + v;
     if (location.hash !== h) {
       try { history.replaceState(null, "", h); } catch (e) { location.hash = h; }
     }
@@ -1484,13 +1613,13 @@ import { firebaseConfig } from "./config.js";
   /* ---------- Sheets ---------- */
   function openSheet(id) {
     if ($("scrim").hidden) lastFocus = document.activeElement;
-    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor"].forEach(function (s) { $(s).hidden = s !== id; });
+    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor", "shopsheet"].forEach(function (s) { $(s).hidden = s !== id; });
     $("scrim").hidden = false;
     $(id).scrollTop = 0;
     document.body.classList.add("locked");
   }
   function closeSheets() {
-    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor"].forEach(function (s) { $(s).hidden = true; });
+    ["editor", "catsheet", "rdetail", "reditor", "setsheet", "meditor", "shopsheet"].forEach(function (s) { $(s).hidden = true; });
     $("scrim").hidden = true;
     $("confirm").hidden = true;
     $("r-confirm").hidden = true;
@@ -1524,6 +1653,7 @@ import { firebaseConfig } from "./config.js";
     $("f-title").value = n ? n.title : (draft && typeof draft.title === "string" ? draft.title : "");
     $("f-body").value = n ? n.body : (draft && typeof draft.body === "string" ? draft.body : "");
     $("f-pin").checked = n ? n.pinned : !!(draft && draft.pinned);
+    $("f-karen").checked = n ? n.fromKaren : (draft && typeof draft.fromKaren === "boolean" ? draft.fromKaren : true);
     $("form-msg").textContent = "";
     $("del").hidden = !n;
     $("confirm").hidden = true;
@@ -1542,7 +1672,7 @@ import { firebaseConfig } from "./config.js";
       return;
     }
     var now = Date.now();
-    var data = { title: title, body: body, cat: S.formCat || "その他", pinned: $("f-pin").checked, updatedAt: now };
+    var data = { title: title, body: body, cat: S.formCat || "その他", pinned: $("f-pin").checked, fromKaren: $("f-karen").checked, updatedAt: now };
     var editing = S.editingId;
     var ref;
     if (editing) {
@@ -1674,14 +1804,15 @@ import { firebaseConfig } from "./config.js";
     }).join("");
     box.innerHTML =
       '<div class="rd" style="--cat:' + KIND_COLOR[r.kind] + '">' +
-        '<div class="sheet-head"><span class="chip">' + esc(r.kind) + '</span><button type="button" class="ghost" data-close>閉じる</button></div>' +
+        '<div class="sheet-head"><span class="note-head"><span class="chip">' + esc(r.kind) + "</span>" + whoTag(r) + '</span><button type="button" class="ghost" data-close>閉じる</button></div>' +
         '<h2 class="rd-title" id="rd-title">' + esc(r.title) + "</h2>" +
         '<div class="meta">' + metaHTML(r) + "</div>" +
         (ings ? '<section><h3>材料 <small>そろえたものをタップ</small></h3><ul class="ings">' + ings + "</ul></section>" : "") +
         (steps ? "<section><h3>作り方</h3><ol class=\"steps\">" + steps + "</ol></section>" : "") +
         (r.tips ? '<section><h3>ポイント</h3><div class="ruled">' + esc(r.tips) + "</div></section>" : "") +
         (srcs ? '<section><h3>出典</h3><ul class="srcs">' + srcs + "</ul></section>" : "") +
-        '<div class="rd-actions"><button type="button" class="ghost" id="rd-copy">コピー</button>' +
+        '<div class="rd-actions">' + (canWrite && r.ingredients.length ? '<button type="button" class="ghost" id="rd-shop">材料を買い物リストへ</button>' : "") +
+        '<button type="button" class="ghost" id="rd-copy">コピー</button>' +
         (canWrite ? '<button type="button" class="ghost" id="rd-edit">直す</button>' : "") + "</div>" +
       "</div>";
   }
@@ -1705,6 +1836,7 @@ import { firebaseConfig } from "./config.js";
     $("r-serv").value = r ? r.servings : "2人分";
     $("r-min").value = r ? r.minutes : "";
     $("r-frozen").checked = r ? r.frozenOk : false;
+    $("r-karen").checked = r ? r.fromKaren : false;
     $("r-ing").value = r ? r.ingredients.map(function (i) { return i.n + (i.a ? " " + i.a : ""); }).join("\n") : "";
     $("r-steps").value = r ? r.steps.join("\n") : "";
     $("r-tips").value = r ? r.tips : "";
@@ -1730,6 +1862,7 @@ import { firebaseConfig } from "./config.js";
       servings: $("r-serv").value.trim().slice(0, 20),
       minutes: $("r-min").value.trim().slice(0, 30),
       frozenOk: $("r-frozen").checked,
+      fromKaren: $("r-karen").checked,
       ingredients: parseIngredients($("r-ing").value),
       steps: parseSteps($("r-steps").value),
       tips: $("r-tips").value.replace(/\s+$/, "").slice(0, 3000),
@@ -1898,16 +2031,17 @@ import { firebaseConfig } from "./config.js";
   }
 
   /* ---------- Settings: backup and restore ---------- */
-  var BACKUP_PATH = /^((notes|recipes|menus)\/[\w.~:@+-]{1,120}|meta\/categories)$/;
+  var BACKUP_PATH = /^((notes|recipes|menus|shopping)\/[\w.~:@+-]{1,120}|meta\/categories)$/;
   var pendingRestore = null;
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function summaryOf(paths) {
-    var c = { notes: 0, recipes: 0, menus: 0, meta: 0 };
+    var c = { notes: 0, recipes: 0, menus: 0, shopping: 0, meta: 0 };
     paths.forEach(function (p) { var k = p.split("/")[0]; if (k in c) c[k]++; });
     var parts = [];
     if (c.notes) parts.push("メモ" + c.notes + "枚");
     if (c.recipes) parts.push("レシピ" + c.recipes + "品");
     if (c.menus) parts.push("献立" + c.menus + "つ");
+    if (c.shopping) parts.push("買い物リスト" + c.shopping + "品");
     if (c.meta) parts.push("分類の設定");
     return parts.join("・");
   }
@@ -1930,6 +2064,10 @@ import { firebaseConfig } from "./config.js";
     var ok = !!db && !S.denied;
     $("backup-save").disabled = !ok;
     $("restore-file").disabled = !ok;
+    $("paste-text").disabled = !ok;
+    $("paste-clip").disabled = !ok;
+    $("paste-check").disabled = !ok;
+    renderStartPick();
     openSheet("setsheet");
   }
   function backupSave() {
@@ -1937,7 +2075,7 @@ import { firebaseConfig } from "./config.js";
     var msg = $("set-msg");
     msg.textContent = "まとめています…";
     var docs = {};
-    var jobs = ["notes", "recipes", "menus"].map(function (c) {
+    var jobs = ["notes", "recipes", "menus", "shopping"].map(function (c) {
       return db.collection(c).get().then(function (q) {
         q.docs.forEach(function (d) { docs[c + "/" + d.id] = d.data(); });
       });
@@ -1955,29 +2093,54 @@ import { firebaseConfig } from "./config.js";
       msg.textContent = "バックアップを作れませんでした。通信の状態を確かめて、もう一度押してください。";
     });
   }
-  function restorePrepare(file) {
+  function existsNow(path) {
+    var k = path.split("/");
+    if (k[0] === "notes") return !!findBy(S.notes, k[1]);
+    if (k[0] === "recipes") return !!findBy(S.recipes, k[1]);
+    if (k[0] === "menus") return !!findBy(S.menus, k[1]);
+    if (k[0] === "shopping") return !!findBy(S.shop, k[1]);
+    if (path === "meta/categories") return !!S.catsDoc;
+    return false;
+  }
+  // バックアップ・引っ越し・追加用の中身（文字）を確かめる。mode:"merge" なら、今あるものに書き足すだけ
+  function prepareFromText(text) {
     var msg = $("set-msg"), run = $("restore-run");
     pendingRestore = null;
     run.hidden = true;
-    if (!file) return;
-    file.text().then(function (text) {
-      var j = JSON.parse(text);
+    var t = String(text || "");
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    try {
+      if (a < 0 || b <= a) throw new Error("format");
+      var j = JSON.parse(t.slice(a, b + 1));
       if (j && j.app === "futari-kakeibo") throw new Error("kakeibo");
       if (!j || typeof j !== "object" || !j.docs || typeof j.docs !== "object" || Array.isArray(j.docs)) throw new Error("format");
-      var items = [];
+      var merge = j.mode === "merge";
+      var items = [], skipped = 0;
       Object.keys(j.docs).forEach(function (path) {
         var data = j.docs[path];
         if (!BACKUP_PATH.test(path) || !data || typeof data !== "object" || Array.isArray(data)) return;
+        if (merge && !existsNow(path)) { skipped++; return; }
         items.push({ path: path, data: data });
       });
-      if (!items.length) throw new Error("empty");
-      pendingRestore = items;
-      msg.textContent = summaryOf(items.map(function (x) { return x.path; })) + "が入っています。\n「読み込む」を押すと家事メモに入れます。同じものはファイルの内容で上書きされます。";
+      if (!items.length) throw new Error(skipped ? "nothing" : "empty");
+      pendingRestore = { items: items, merge: merge };
+      var sum = summaryOf(items.map(function (x) { return x.path; }));
+      msg.textContent = merge
+        ? sum + "に、書き足す内容が入っています。" + (skipped ? "（まだ入っていない" + skipped + "件は飛ばします）" : "") + "\n「読み込む」を押すと書き足します。ほかの内容はそのままです。"
+        : sum + "が入っています。\n「読み込む」を押すと家事メモに入れます。同じものはファイルの内容で上書きされます。";
       run.hidden = false;
-    }).catch(function (e) {
+    } catch (e) {
       msg.textContent = e && e.message === "kakeibo"
         ? "これは家計簿のバックアップです。家計簿のアプリの設定から読み込んでください。"
-        : "このファイルは読み込めませんでした。家事メモのバックアップか、引っ越し用のファイル（.json）か確かめてください。";
+        : e && e.message === "nothing"
+          ? "書き足す先のメモやレシピが、まだ入っていません。先に引っ越し用のファイルを読み込んでください。"
+          : "読み込めませんでした。家事メモのバックアップか、追加用・引っ越し用の中身か確かめてください。";
+    }
+  }
+  function restorePrepare(file) {
+    if (!file) return;
+    file.text().then(prepareFromText, function () {
+      $("set-msg").textContent = "ファイルを開けませんでした。もう一度選んでください。";
     }).then(function () {
       $("restore-file").value = "";
     });
@@ -1985,15 +2148,16 @@ import { firebaseConfig } from "./config.js";
   function restoreRun() {
     if (!pendingRestore || !db) return;
     var msg = $("set-msg"), run = $("restore-run");
-    var items = pendingRestore;
+    var items = pendingRestore.items, merge = pendingRestore.merge;
     run.disabled = true;
     msg.textContent = "読み込んでいます…";
     db.setMany(items, function (done) {
       msg.textContent = "読み込んでいます… " + done + " / " + items.length;
-    }).then(function () {
-      msg.textContent = summaryOf(items.map(function (x) { return x.path; })) + "を読み込みました。";
+    }, merge).then(function () {
+      msg.textContent = summaryOf(items.map(function (x) { return x.path; })) + (merge ? "に書き足しました。" : "を読み込みました。");
       run.hidden = true;
       pendingRestore = null;
+      $("paste-text").value = "";
       toast("読み込みました");
     }).catch(function (e) {
       msg.textContent = errorText(e);
@@ -2008,6 +2172,139 @@ import { firebaseConfig } from "./config.js";
       $("logout").disabled = false;
       $("set-msg").textContent = "ログアウトできませんでした。もう一度押してください。";
     });
+  }
+
+  /* ---------- 最初に開く画面 ---------- */
+  function renderStartPick() {
+    var cur = startPref();
+    Array.prototype.forEach.call(document.querySelectorAll("#start-view [data-start]"), function (b) {
+      b.setAttribute("aria-checked", String(b.getAttribute("data-start") === cur));
+    });
+  }
+
+  /* ---------- 買い物リスト ---------- */
+  var WATER = /^(水|お湯|湯|熱湯)(（.*）)?$/;
+  function addToShop(items) {
+    if (!db || !items.length) return Promise.resolve(0);
+    var now = Date.now(), k = 0;
+    var byName = {}, writes = {};
+    S.shop.forEach(function (x) {
+      if (!x.checked) byName[norm(x.name)] = { id: x.id, data: { name: x.name, amount: x.amount, from: x.from, checked: false, createdAt: x.createdAt || now, updatedAt: now } };
+    });
+    items.forEach(function (it) {
+      var name = String(it.name || "").trim().slice(0, 60);
+      if (!name) return;
+      var amount = String(it.amount || "").trim().slice(0, 60), from = String(it.from || "").trim().slice(0, 80);
+      var key = norm(name), cur = byName[key];
+      if (cur) {
+        var froms = cur.data.from ? cur.data.from.split("、") : [];
+        var again = from && froms.indexOf(from) >= 0;
+        if (amount && !again) cur.data.amount = cur.data.amount ? (cur.data.amount + "＋" + amount).slice(0, 120) : amount;
+        if (from && !again) cur.data.from = froms.concat([from]).join("、").slice(0, 200);
+        cur.data.updatedAt = now;
+        writes[cur.id] = cur.data;
+      } else {
+        var id = db.collection("shopping").doc().id;
+        var d = { name: name, amount: amount, from: from, checked: false, createdAt: now + (k++), updatedAt: now };
+        byName[key] = { id: id, data: d };
+        writes[id] = d;
+      }
+    });
+    var list = Object.keys(writes).map(function (id) { return { path: "shopping/" + id, data: writes[id] }; });
+    if (!list.length) return Promise.resolve(0);
+    return settle(db.setMany(list)).then(function () { return list.length; });
+  }
+  function recipeGroup(r, skipChecked) {
+    var done = (skipChecked && S.checked[r.id]) || {};
+    return {
+      title: r.title,
+      items: r.ingredients.map(function (i, k) {
+        return { name: i.n, amount: i.a, on: !done[k] && !WATER.test(i.n.trim()) };
+      })
+    };
+  }
+  function openShopPicker(groups) {
+    if (!writable()) return;
+    S.pick = groups.filter(function (g) { return g.items.length; });
+    if (!S.pick.length) { toast("入れられる材料がありません"); return; }
+    $("shop-msg").textContent = "";
+    $("shop-pick-save").disabled = false;
+    renderPicker();
+    openSheet("shopsheet");
+  }
+  function renderPicker() {
+    var n = 0;
+    $("shop-pick").innerHTML = S.pick.map(function (g, gi) {
+      return '<section class="pick-group">' + (g.title ? "<h3>" + esc(g.title) + "</h3>" : "") + '<ul class="ings">' +
+        g.items.map(function (it, ii) {
+          if (it.on) n++;
+          return '<li><button type="button" class="ing pick" data-g="' + gi + '" data-i="' + ii + '" aria-pressed="' + it.on + '">' +
+            '<span class="box" aria-hidden="true"></span><span class="nm">' + esc(it.name) + '</span><span class="am">' + esc(it.amount) + "</span></button></li>";
+        }).join("") + "</ul></section>";
+    }).join("");
+    $("shop-pick-save").textContent = n ? n + "品を入れる" : "入れるものを選んでください";
+    $("shop-pick-save").disabled = !n;
+  }
+  function savePicker() {
+    var items = [];
+    S.pick.forEach(function (g) {
+      g.items.forEach(function (it) { if (it.on) items.push({ name: it.name, amount: it.amount, from: g.from === undefined ? g.title : g.from }); });
+    });
+    if (!items.length) return;
+    $("shop-pick-save").disabled = true;
+    addToShop(items).then(function () {
+      closeSheets();
+      toast("買い物リストに" + items.length + "品入れました");
+    }).catch(function (e) {
+      $("shop-msg").textContent = errorText(e);
+      $("shop-pick-save").disabled = false;
+    });
+  }
+  function shopFromMenu(id) {
+    var m = findBy(S.menus, id);
+    if (!m) return;
+    var groups = [], others = [];
+    m.items.forEach(function (it) {
+      var r = it.id ? findBy(S.recipes, it.id) : null;
+      if (r) groups.push(recipeGroup(r, false));
+      else if (it.label) others.push({ name: it.label, amount: "", on: false });
+    });
+    if (others.length) groups.push({ title: "そのほか", from: m.title, items: others });
+    openShopPicker(groups);
+  }
+  function toggleShop(id) {
+    var it = findBy(S.shop, id);
+    if (!it || !db || !writable()) return;
+    db.collection("shopping").doc(id).update({ checked: !it.checked, updatedAt: Date.now() })
+      .catch(function (e) { toast(errorText(e)); });
+  }
+  var shopArmTimer = null;
+  function clearShop(onlyDone) {
+    if (!db || !writable()) return;
+    if (!onlyDone && !S.shopArm) {
+      S.shopArm = true;
+      renderList();
+      clearTimeout(shopArmTimer);
+      shopArmTimer = setTimeout(function () { S.shopArm = false; renderList(); }, 4000);
+      return;
+    }
+    S.shopArm = false;
+    clearTimeout(shopArmTimer);
+    var paths = S.shop.filter(function (x) { return onlyDone ? x.checked : true; }).map(function (x) { return "shopping/" + x.id; });
+    if (!paths.length) { renderList(); return; }
+    db.deleteMany(paths).then(function () {
+      toast(onlyDone ? "買ったものを消しました" : "買い物リストを空にしました");
+    }, function (e) { toast(errorText(e)); });
+  }
+  function addShopManual(ev) {
+    ev.preventDefault();
+    var inp = $("shop-new");
+    var name = inp.value.trim();
+    if (!name) { inp.focus(); return; }
+    addToShop([{ name: name, amount: "", from: "" }]).then(function () {
+      inp.value = "";
+      inp.focus();
+    }, function (e) { toast(errorText(e)); });
   }
 
   /* ---------- Login ---------- */
@@ -2053,7 +2350,8 @@ import { firebaseConfig } from "./config.js";
   /* ---------- Events ---------- */
   $("v-tips").addEventListener("click", function () { setView("tips"); });
   $("v-recipes").addEventListener("click", function () { setView("recipes"); });
-  window.addEventListener("hashchange", function () { var v = readHash(); if (v !== S.view) { S.view = v; render(); } });
+  $("v-shop").addEventListener("click", function () { setView("shop"); });
+  window.addEventListener("hashchange", function () { var v = readHash(); if (v && v !== S.view) { S.view = v; render(); } });
 
   $("q").addEventListener("input", function (e) {
     if (S.view === "tips") S.q = e.target.value; else S.rq = e.target.value;
@@ -2086,11 +2384,17 @@ import { firebaseConfig } from "./config.js";
     var ed = e.target.closest("[data-medit]");
     if (ed) { openMenuEditor(ed.getAttribute("data-medit")); return; }
     if (e.target.closest("[data-madd]")) { openMenuEditor(null); return; }
+    var ms = e.target.closest("[data-mshop]");
+    if (ms) { shopFromMenu(ms.getAttribute("data-mshop")); return; }
     var b = e.target.closest("[data-open]");
     if (b) openRecipe(b.getAttribute("data-open"));
   });
 
   $("list").addEventListener("click", function (e) {
+    var sid = e.target.closest("[data-sid]");
+    if (sid) { toggleShop(sid.getAttribute("data-sid")); return; }
+    if (e.target.closest("#shop-clear-done")) { clearShop(true); return; }
+    if (e.target.closest("#shop-clear-all")) { clearShop(false); return; }
     var open = e.target.closest("[data-open]");
     if (open) { openRecipe(open.getAttribute("data-open")); return; }
     var b = e.target.closest("[data-act]");
@@ -2130,6 +2434,7 @@ import { firebaseConfig } from "./config.js";
   $("f-title").addEventListener("input", queueDraft);
   $("f-body").addEventListener("input", queueDraft);
   $("f-pin").addEventListener("change", saveDraft);
+  $("f-karen").addEventListener("change", saveDraft);
 
   $("form").addEventListener("submit", saveNote);
   $("del").addEventListener("click", function () { $("confirm").hidden = false; });
@@ -2149,6 +2454,11 @@ import { firebaseConfig } from "./config.js";
       var m = S.checked[S.openRecipeId] || (S.checked[S.openRecipeId] = {});
       m[k] = !m[k];
       ing.setAttribute("aria-pressed", String(!!m[k]));
+      return;
+    }
+    if (e.target.closest("#rd-shop")) {
+      var sr = findBy(S.recipes, S.openRecipeId);
+      if (sr) openShopPicker([recipeGroup(sr, true)]);
       return;
     }
     if (e.target.closest("#rd-copy")) {
@@ -2177,6 +2487,33 @@ import { firebaseConfig } from "./config.js";
   $("backup-save").addEventListener("click", backupSave);
   $("restore-file").addEventListener("change", function (e) { restorePrepare(e.target.files && e.target.files[0]); });
   $("restore-run").addEventListener("click", restoreRun);
+  $("paste-check").addEventListener("click", function () { prepareFromText($("paste-text").value); });
+  $("paste-text").addEventListener("paste", function () { setTimeout(function () { prepareFromText($("paste-text").value); }, 0); });
+  $("paste-clip").addEventListener("click", function () {
+    function manual() { toast("欄を長押しして「ペースト」で貼り付けてください"); $("paste-text").focus(); }
+    if (!navigator.clipboard || !navigator.clipboard.readText) { manual(); return; }
+    navigator.clipboard.readText().then(function (t) {
+      if (!t) { manual(); return; }
+      $("paste-text").value = t;
+      prepareFromText(t);
+    }, manual);
+  });
+  $("start-view").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-start]");
+    if (!b) return;
+    try { localStorage.setItem(START_KEY, b.getAttribute("data-start")); } catch (x) { /* この端末では覚えられない */ }
+    renderStartPick();
+    toast("次から、最初に「" + b.textContent.trim() + "」を開きます");
+  });
+  $("shop-form").addEventListener("submit", addShopManual);
+  $("shop-pick").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-g]");
+    if (!b) return;
+    var it = S.pick[Number(b.getAttribute("data-g"))].items[Number(b.getAttribute("data-i"))];
+    it.on = !it.on;
+    renderPicker();
+  });
+  $("shop-pick-save").addEventListener("click", savePicker);
   $("logout").addEventListener("click", logout);
 
   $("mform").addEventListener("submit", saveMenu);
@@ -2232,6 +2569,7 @@ import { firebaseConfig } from "./config.js";
           body: str(v.body, 8000),
           cat: cleanCat(v.cat),
           pinned: v.pinned === true,
+          fromKaren: v.fromKaren === true,
           createdAt: Number(v.createdAt) || 0
         };
       });
@@ -2249,6 +2587,7 @@ import { firebaseConfig } from "./config.js";
           servings: str(v.servings, 30),
           minutes: str(v.minutes, 40),
           frozenOk: v.frozenOk === true,
+          fromKaren: v.fromKaren === true,
           ingredients: (Array.isArray(v.ingredients) ? v.ingredients : []).slice(0, 80).map(function (i) {
             return { n: str(i && i.n, 80), a: str(i && i.a, 60) };
           }).filter(function (i) { return i.n; }),
@@ -2279,6 +2618,22 @@ import { firebaseConfig } from "./config.js";
       }).sort(function (a, b) { return a.order - b.order; });
       render();
     }, function () { /* menus are optional */ });
+
+    db.collection("shopping").onSnapshot(function (snap) {
+      S.shop = snap.docs.map(function (d) {
+        var v = d.data() || {};
+        return {
+          id: d.id,
+          name: str(v.name, 60),
+          amount: str(v.amount, 120),
+          from: str(v.from, 200),
+          checked: v.checked === true,
+          createdAt: Number(v.createdAt) || 0
+        };
+      }).filter(function (x) { return x.name; });
+      if (!snap.metadata.fromCache) S.sLoaded = true;
+      render();
+    }, function () { S.sLoaded = true; render(); });
 
     db.doc("meta/categories").onSnapshot(function (s) {
       var v = s.exists ? s.data() : null;
@@ -2361,13 +2716,21 @@ import { firebaseConfig } from "./config.js";
     return {
       doc: function (path) { return docApi(doc(fs, full(path))); },
       collection: function (path) { return collApi(collection(fs, full(path))); },
-      setMany: function (items, onProgress) {
+      deleteMany: function (paths) {
+        var b = writeBatch(fs);
+        paths.slice(0, 450).forEach(function (pth) { b.delete(doc(fs, full(pth))); });
+        return settle(wrapErr(b.commit()));
+      },
+      setMany: function (items, onProgress, merge) {
         var i = 0;
         function step() {
           if (i >= items.length) return Promise.resolve();
           var b = writeBatch(fs);
           var chunk = items.slice(i, i + 400);
-          chunk.forEach(function (it) { b.set(doc(fs, full(it.path)), it.data); });
+          chunk.forEach(function (it) {
+            if (merge) b.set(doc(fs, full(it.path)), it.data, { merge: true });
+            else b.set(doc(fs, full(it.path)), it.data);
+          });
           return wrapErr(b.commit()).then(function () {
             i += chunk.length;
             if (onProgress) onProgress(i);
@@ -2380,7 +2743,7 @@ import { firebaseConfig } from "./config.js";
   }
 
   function init() {
-    S.view = readHash();
+    S.view = readHash() || startPref();
     render();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(function () { /* なくても動く */ });
