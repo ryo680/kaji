@@ -14,7 +14,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&amp;family=Zen+Maru+Gothic:wght@700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&amp;display=swap" crossorigin="anonymous" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&amp;display=swap"></noscript>
 <style>
 :root {
   /* Layout: a desk with an index-card box. Divider tabs on top, ruled cards below, one red button to write a new card. Recipes reuse the cards, with numbered steps. */
@@ -23,9 +24,9 @@
   --card: #FFFFFF;
   --field: #F6F8FA;
   --ink: #1E2833;
-  --ink-soft: #566271;
+  --ink-soft: #4D5866;
   --rule: #D7E4F1;
-  --line: #C6D0DA;
+  --line: #808C99;
   --accent: #C23F38;
   --accent-ink: #FFFFFF;
   --c0: #2D6BAA;
@@ -35,8 +36,8 @@
   --c4: #8C6A0E;
   --c5: #844B98;
   --shadow: 0 1px 2px rgba(30, 40, 51, .08), 0 6px 18px rgba(30, 40, 51, .07);
-  --font-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
-  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  --font-display: "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  --font-body: "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -48,7 +49,7 @@
     --ink: #E6EBF0;
     --ink-soft: #9AA6B3;
     --rule: #28333F;
-    --line: #34404D;
+    --line: #66727F;
     --accent: #E0645A;
     --accent-ink: #1A0E0D;
     --c0: #7DB3EA;
@@ -69,7 +70,7 @@
   --ink: #E6EBF0;
   --ink-soft: #9AA6B3;
   --rule: #28333F;
-  --line: #34404D;
+  --line: #66727F;
   --accent: #E0645A;
   --accent-ink: #1A0E0D;
   --c0: #7DB3EA;
@@ -152,7 +153,7 @@ button { cursor: pointer; }
   justify-content: center;
   gap: 8px;
 }
-.view-btn .n { font-family: var(--font-body); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.view-btn .n { font-family: var(--font-body); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .view-btn[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
 
 /* Search */
@@ -206,7 +207,7 @@ button { cursor: pointer; }
   white-space: nowrap;
 }
 .tab .n {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   min-width: 22px;
@@ -265,11 +266,11 @@ button { cursor: pointer; }
   border-radius: 999px;
   border: 1.5px solid var(--cat);
   color: var(--cat);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.6;
 }
-.date { color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
+.date { color: var(--ink-soft); font-size: 14px; font-variant-numeric: tabular-nums; }
 .pin {
   margin-left: auto;
   display: inline-flex;
@@ -327,7 +328,7 @@ button { cursor: pointer; }
   border-radius: 999px;
   background: var(--c0);
   color: var(--card);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.6;
 }
@@ -355,7 +356,7 @@ button { cursor: pointer; }
   align-items: baseline;
   gap: 8px;
 }
-.sec-title small { font-family: var(--font-body); font-weight: 500; font-size: 13px; color: var(--ink-soft); }
+.sec-title small { font-family: var(--font-body); font-weight: 500; font-size: 14px; color: var(--ink-soft); }
 .menu-row {
   display: flex;
   gap: 12px;
@@ -397,7 +398,7 @@ button { cursor: pointer; }
   font-weight: 700;
 }
 .menu-item .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat); flex: none; }
-.menu-item .go { margin-left: auto; flex: none; white-space: nowrap; color: var(--ink-soft); font-weight: 500; font-size: 13px; }
+.menu-item .go { margin-left: auto; flex: none; white-space: nowrap; color: var(--ink-soft); font-weight: 500; font-size: 14px; }
 .menu-item.plain { cursor: default; font-weight: 500; color: var(--ink-soft); background: transparent; border-style: dashed; }
 
 /* Empty / info card */
@@ -593,7 +594,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
   justify-content: space-between;
   gap: 8px;
 }
-.rd h3 small { font-weight: 500; font-size: 13px; }
+.rd h3 small { font-weight: 500; font-size: 14px; }
 .ings { list-style: none; margin: 0; padding: 0; }
 .ing {
   width: 100%;
@@ -797,7 +798,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
 .row select:focus { outline: none; border-color: var(--c0); }
 
 /* ---------- v2: かれんさんの印、買い物リスト、貼り付け ---------- */
-.who-tag { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.6; }
+.who-tag { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 14px; font-weight: 700; line-height: 1.6; }
 .who-tag.karen { background: var(--c5); color: var(--card); }
 .who-tag.research { border: 1.5px solid var(--line); color: var(--ink-soft); }
 .shop-add { margin: 0; }
@@ -808,7 +809,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
 .shop-list .ing .box { align-self: flex-start; margin-top: 3px; }
 .shop-list .nm b { font-weight: 700; }
 .shop-am { margin-left: 10px; font-variant-numeric: tabular-nums; }
-.shop-from { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--ink-soft); }
+.shop-from { display: block; margin-top: 2px; font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--ink-soft); }
 .shop-tools { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .menu-shop { align-self: flex-start; margin-top: 4px; }
 .pick-group h3 { margin: 10px 0 2px; font-size: 16px; }
@@ -818,6 +819,96 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
 .paste-text { width: 100%; min-height: 96px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--field); padding: 10px; font: inherit; font-size: 14px; color: inherit; resize: vertical; }
 .paste-text:focus { outline: none; border-color: var(--c0); }
 .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- v3: 押すところは44px以上、読みやすさ ---------- */
+.act { min-height: 44px; }
+.toggle { min-height: 44px; }
+.chip-pick { min-height: 44px; }
+.menu-item { min-height: 44px; }
+.m-items button { width: 44px; height: 44px; }
+.srcs a { display: inline-flex; align-items: center; min-height: 44px; }
+.rd-actions .ghost, .shop-tools .ghost, .row-btns .ghost { min-height: 44px; }
+.ing .box { border-color: var(--ink-soft); }
+.icon-btn {
+  width: auto;
+  min-width: 52px;
+  height: auto;
+  min-height: 52px;
+  margin-right: -6px;
+  padding: 4px 6px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.icon-label { font-size: 14px; font-weight: 700; line-height: 1.1; }
+.field small, .legend small { font-size: 14px; }
+
+/* 献立：折りたたみ */
+.macc-list { display: flex; flex-direction: column; gap: 8px; }
+.macc { background: var(--card); border-radius: 6px; box-shadow: var(--shadow); border-left: 5px solid var(--accent); }
+.macc-head {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 17px;
+  font-weight: 700;
+}
+.macc-title { flex: 1; min-width: 0; line-height: 1.45; overflow-wrap: anywhere; }
+.macc-n { flex: none; font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+.macc-ic {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tab);
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+}
+.macc-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.macc-note { margin: 0; font-size: 15px; color: var(--ink-soft); line-height: 1.7; }
+.macc-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.macc-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.macc-actions .ghost { min-height: 44px; }
+.macc-add {
+  min-height: 52px;
+  border: 1.5px dashed var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* 電波の表示 */
+.netbar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  margin: 0 -16px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+  background: #3B4552;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.netbar::before { content: "●"; color: #FFC857; flex: none; }
 </style>
 </head>
 <body>
@@ -843,13 +934,14 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
 </div>
 
 <main class="wrap">
+  <div class="netbar" id="netbar" role="status" aria-live="polite" hidden></div>
   <header class="top">
     <div>
       <h1>家事メモ</h1>
       <p class="sub" id="sub">教えてもらった洗濯・料理・掃除のコツ</p>
     </div>
     <div class="top-side">
-      <button type="button" class="icon-btn" id="open-set" aria-label="設定とバックアップ"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+      <button type="button" class="icon-btn" id="open-set" aria-label="設定とバックアップ"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg><span class="icon-label" aria-hidden="true">設定</span></button>
       <p class="count" id="count" aria-live="polite"></p>
     </div>
   </header>
@@ -1183,7 +1275,8 @@ import { firebaseConfig } from "./config.js";
     shop: [],
     sLoaded: false,
     shopArm: false,
-    pick: []
+    pick: [],
+    openMenus: {}
   };
   var START_KEY = "kaji-memo.start";
   function startPref() {
@@ -1490,26 +1583,35 @@ import { firebaseConfig } from "./config.js";
     var w = writable();
     var canAdd = w && S.recipes.length > 0;
     if (S.view !== "recipes" || S.rq.trim() || (!S.menus.length && !canAdd)) { el.hidden = true; el.innerHTML = ""; return; }
-    var cards = S.menus.map(function (m) {
+    var html = S.menus.map(function (m) {
+      var open = !!S.openMenus[m.id];
+      var hasRecipe = false, n = 0;
       var items = m.items.map(function (it) {
         var r = it.id ? findBy(S.recipes, it.id) : null;
         if (r) {
+          hasRecipe = true; n++;
           return '<li><button type="button" class="menu-item" data-open="' + esc(r.id) + '" style="--cat:' + KIND_COLOR[r.kind] + '">' +
             '<span class="dot"></span><span>' + esc(r.title) + '</span><span class="go">見る ›</span></button></li>';
         }
         var label = it.label || "";
+        if (label) n++;
         return label ? '<li><span class="menu-item plain"><span>' + esc(label) + "</span></span></li>" : "";
       }).join("");
-      return '<article class="menu"><div class="menu-head"><h3>' + esc(m.title) + "</h3>" +
-        (w ? '<button type="button" class="act" data-medit="' + esc(m.id) + '" aria-label="献立「' + esc(m.title) + '」を直す">直す</button>' : "") +
-        "</div>" + (m.note ? "<p>" + esc(m.note) + "</p>" : "") + "<ul>" + items + "</ul>" +
-        (w && m.items.some(function (it) { return it.id && findBy(S.recipes, it.id); })
-          ? '<button type="button" class="act menu-shop" data-mshop="' + esc(m.id) + '">材料を買い物リストへ</button>' : "") +
-        "</article>";
+      var bid = "macc-" + m.id.replace(/[^\w-]/g, "_");
+      return '<article class="macc">' +
+        '<button type="button" class="macc-head" data-mtoggle="' + esc(m.id) + '" aria-expanded="' + open + '" aria-controls="' + esc(bid) + '">' +
+          '<span class="macc-title">' + esc(m.title) + '</span><span class="macc-n">' + n + '品</span>' +
+          '<span class="macc-ic" aria-hidden="true">' + (open ? "－" : "＋") + "</span></button>" +
+        '<div class="macc-body" id="' + esc(bid) + '"' + (open ? "" : " hidden") + ">" +
+          (m.note ? '<p class="macc-note">' + esc(m.note) + "</p>" : "") +
+          '<ul class="macc-items">' + items + "</ul>" +
+          (w ? '<div class="macc-actions">' +
+            (hasRecipe ? '<button type="button" class="ghost" data-mshop="' + esc(m.id) + '">材料を買い物リストへ</button>' : "") +
+            '<button type="button" class="ghost" data-medit="' + esc(m.id) + '" aria-label="献立「' + esc(m.title) + '」を直す">直す</button></div>' : "") +
+        "</div></article>";
     }).join("");
-    if (canAdd) cards += '<button type="button" class="menu menu-add" data-madd="1">＋ 献立を作る</button>';
-    var n = S.menus.length + (canAdd ? 1 : 0);
-    el.innerHTML = '<h2 class="sec-title">献立' + (n > 1 ? " <small>横にスクロールできます</small>" : "") + '</h2><div class="menu-row">' + cards + "</div>";
+    if (canAdd) html += '<button type="button" class="macc-add" data-madd="1">＋ 献立を作る</button>';
+    el.innerHTML = '<h2 class="sec-title">献立 <small>名前を押すと中身が開きます</small></h2><div class="macc-list">' + html + "</div>";
     el.hidden = false;
   }
 
@@ -2381,6 +2483,15 @@ import { firebaseConfig } from "./config.js";
   });
 
   $("menus").addEventListener("click", function (e) {
+    var tg = e.target.closest("[data-mtoggle]");
+    if (tg) {
+      var mid = tg.getAttribute("data-mtoggle");
+      S.openMenus[mid] = !S.openMenus[mid];
+      renderMenus();
+      var again = document.querySelector('[data-mtoggle="' + (window.CSS && CSS.escape ? CSS.escape(mid) : mid) + '"]');
+      if (again) again.focus();
+      return;
+    }
     var ed = e.target.closest("[data-medit]");
     if (ed) { openMenuEditor(ed.getAttribute("data-medit")); return; }
     if (e.target.closest("[data-madd]")) { openMenuEditor(null); return; }
@@ -2656,6 +2767,58 @@ import { firebaseConfig } from "./config.js";
     subscribe();
   }
 
+  /* ---------- 電波の状態 ---------- */
+  var pendingWrites = 0, pendingSlow = false, pendingTimer = null, hadPending = false;
+  function track(p) {
+    pendingWrites++;
+    if (!pendingTimer) pendingTimer = setTimeout(function () { pendingTimer = null; if (pendingWrites) { pendingSlow = true; updateNet(); } }, 3000);
+    updateNet();
+    var done = function () {
+      pendingWrites = Math.max(0, pendingWrites - 1);
+      if (!pendingWrites) {
+        clearTimeout(pendingTimer); pendingTimer = null;
+        if (hadPending) toast("送れていなかった分を送りました");
+        pendingSlow = false; hadPending = false;
+      }
+      updateNet();
+    };
+    p.then(done, done);
+    return p;
+  }
+  function updateNet() {
+    var bar = $("netbar");
+    if (!bar) return;
+    var off = typeof navigator !== "undefined" && navigator.onLine === false;
+    var msg = "";
+    if (off) {
+      msg = "オフラインです。いま見えているのは、この端末に控えてある内容です。" +
+        (pendingWrites ? "書いた" + pendingWrites + "件は、つながったときに送ります。" : "書いたものは、つながったときに送ります。");
+    } else if (pendingWrites && pendingSlow) {
+      msg = "送信待ちが" + pendingWrites + "件あります。電波がよくなると、自動で送ります。";
+    }
+    if (msg && pendingWrites) hadPending = true;
+    bar.textContent = msg;
+    bar.hidden = !msg;
+  }
+  window.addEventListener("online", updateNet);
+  window.addEventListener("offline", updateNet);
+  // 動作確認用の見本のデータ置き場にも、送信待ちの数え方を同じようにつける
+  function trackDb(api) {
+    function wrapDoc(d) {
+      return Object.assign({}, d, {
+        set: function (x) { return settle(track(d.set(x))); },
+        update: function (x) { return settle(track(d.update(x))); },
+        delete: function () { return settle(track(d.delete())); }
+      });
+    }
+    return Object.assign({}, api, {
+      doc: function (pth) { return wrapDoc(api.doc(pth)); },
+      collection: function (pth) { var c = api.collection(pth); return Object.assign({}, c, { doc: function (id) { return wrapDoc(c.doc(id)); } }); },
+      setMany: function (a, b, c) { return track(api.setMany(a, b, c)); },
+      deleteMany: function (a) { return settle(track(api.deleteMany(a))); }
+    });
+  }
+
   /* ---------- Firebase (same shape as the Claude version's db) ---------- */
   function mapFsError(e) {
     var code = (e && e.code) || "";
@@ -2692,9 +2855,9 @@ import { firebaseConfig } from "./config.js";
       return {
         id: ref.id,
         get: function () { return wrapErr(getDoc(ref).then(wrapDocSnap)); },
-        set: function (data) { return settle(wrapErr(setDoc(ref, data))); },
-        update: function (data) { return settle(wrapErr(setDoc(ref, data, { merge: true }))); },
-        delete: function () { return settle(wrapErr(deleteDoc(ref))); },
+        set: function (data) { return settle(track(wrapErr(setDoc(ref, data)))); },
+        update: function (data) { return settle(track(wrapErr(setDoc(ref, data, { merge: true })))); },
+        delete: function () { return settle(track(wrapErr(deleteDoc(ref)))); },
         onSnapshot: function (next, err) {
           return onSnapshot(ref, opts, function (snap) { next(wrapDocSnap(snap)); }, function (e) { if (err) err(mapFsError(e)); });
         }
@@ -2719,7 +2882,7 @@ import { firebaseConfig } from "./config.js";
       deleteMany: function (paths) {
         var b = writeBatch(fs);
         paths.slice(0, 450).forEach(function (pth) { b.delete(doc(fs, full(pth))); });
-        return settle(wrapErr(b.commit()));
+        return settle(track(wrapErr(b.commit())));
       },
       setMany: function (items, onProgress, merge) {
         var i = 0;
@@ -2731,7 +2894,7 @@ import { firebaseConfig } from "./config.js";
             if (merge) b.set(doc(fs, full(it.path)), it.data, { merge: true });
             else b.set(doc(fs, full(it.path)), it.data);
           });
-          return wrapErr(b.commit()).then(function () {
+          return track(wrapErr(b.commit())).then(function () {
             i += chunk.length;
             if (onProgress) onProgress(i);
             return step();
@@ -2745,12 +2908,13 @@ import { firebaseConfig } from "./config.js";
   function init() {
     S.view = readHash() || startPref();
     render();
+    updateNet();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(function () { /* なくても動く */ });
     }
     // 動作確認用：テストのときだけ、見本のデータ置き場を使う
     var test = window.__KAJI_TEST__;
-    if (test) { startApp(test.db, test.email); return; }
+    if (test) { startApp(trackDb(test.db), test.email); return; }
     if (!firebaseConfig || !firebaseConfig.apiKey || /ここに/.test(String(firebaseConfig.apiKey))) {
       S.dbState = "none";
       render();
