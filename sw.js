@@ -1,6 +1,6 @@
 // 画面のファイルを端末に控えておき、電波が弱いときも開けるようにする。
 // 記録の読み書き（Firebase の通信）には手を出さない。
-const CACHE = "kaji-memo-v3";
+const CACHE = "kaji-memo-v4";
 const FONT_CACHE = "ud-font-v1";
 const WAIT_MS = 3000; // ネットの返事をこれ以上待たずに、控えで開く
 const FILES = [
