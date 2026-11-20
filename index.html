@@ -808,6 +808,9 @@ fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: colu
 .shop-list .nm b { font-weight: 700; }
 .shop-am { margin-left: 10px; font-variant-numeric: tabular-nums; }
 .shop-from { display: block; margin-top: 2px; font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--ink-soft); }
+.shop-price { display: block; margin-top: 2px; font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--ink); font-variant-numeric: tabular-nums; }
+.shop-price b { font-weight: 700; }
+.shop-note { margin: 10px 2px 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
 .shop-tools { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .menu-shop { align-self: flex-start; margin-top: 4px; }
 .pick-group h3 { margin: 10px 0 2px; font-size: 16px; }
@@ -1244,6 +1247,7 @@ import { firebaseConfig } from "./config.js";
     recipes: [],
     menus: [],
     catsDoc: null,
+    prices: null,
     filter: ALL,
     rFilter: ALL,
     frozenOnly: false,
@@ -1342,6 +1346,51 @@ import { firebaseConfig } from "./config.js";
       return String.fromCharCode(ch.charCodeAt(0) - 0x60);
     });
   }
+
+  /* ---------- 値段の目安（大阪市の平均） ---------- */
+  // meta/prices：{ area, month, source, items:[{ name, label, price, keys:[], not:[] }] }
+  function cleanPrices(v) {
+    if (!v || typeof v !== "object" || !Array.isArray(v.items)) return null;
+    var str = function (x, n) { return typeof x === "string" ? x.trim().slice(0, n) : ""; };
+    var words = function (a) {
+      return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 30).map(function (x) { return norm(x.trim().slice(0, 30)); }) : [];
+    };
+    var items = v.items.slice(0, 400).map(function (it) {
+      if (!it || typeof it !== "object") return null;
+      var price = Number(it.price);
+      var o = { name: str(it.name, 40), label: str(it.label, 30), price: price, keys: words(it.keys), not: words(it.not) };
+      if (!o.name || !o.label || !isFinite(price) || price <= 0 || price > 1000000 || !o.keys.length) return null;
+      o.price = Math.round(price);
+      return o;
+    }).filter(Boolean);
+    if (!items.length) return null;
+    var month = str(v.month, 7);
+    return {
+      area: str(v.area, 20) || "大阪市",
+      month: /^\d{4}-\d{2}$/.test(month) ? month : "",
+      source: str(v.source, 120),
+      items: items
+    };
+  }
+  // 買い物の名前に合う品目を探す。いちばん長く当てはまる言葉を選ぶ。「not」の言葉が入っていたら、その品目は使わない
+  function priceFor(name) {
+    if (!S.prices) return null;
+    // かっこの中（「（甘口）」「（生鮭のときだけ）」など）は、ただの書き添えなので見ない
+    // 除く言葉は、かっこの中もふくめて見る（「牛肉（国産）」を輸入牛にしない）
+    var full = norm(name), n = full.replace(/\([^)]*\)/g, "").trim() || full, best = null, bestLen = 0;
+    S.prices.items.forEach(function (it) {
+      if (it.not.some(function (w) { return full.indexOf(w) >= 0; })) return;
+      it.keys.forEach(function (k) {
+        if (k.length > bestLen && n.indexOf(k) >= 0) { best = it; bestLen = k.length; }
+      });
+    });
+    return best;
+  }
+  function monthText(m) {
+    var a = /^(\d{4})-(\d{2})$/.exec(m || "");
+    return a ? a[1] + "年" + Number(a[2]) + "月" : "";
+  }
+  function yen(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
   var toastTimer = null;
   function toast(msg) {
@@ -1624,12 +1673,19 @@ import { firebaseConfig } from "./config.js";
       return (a.createdAt || 0) - (b.createdAt || 0);
     });
     var done = list.length - shopLeft();
+    var anyPrice = false;
     el.innerHTML = '<div class="shop-card"><ul class="ings shop-list">' + list.map(function (it) {
+      var pr = it.checked ? null : priceFor(it.name);
+      if (pr) anyPrice = true;
       return '<li><button type="button" class="ing" data-sid="' + esc(it.id) + '" aria-pressed="' + it.checked + '"' + (w ? "" : " disabled") + ">" +
         '<span class="box" aria-hidden="true"></span><span class="nm"><b>' + esc(it.name) + "</b>" +
         (it.amount ? '<span class="shop-am">' + esc(it.amount) + "</span>" : "") +
+        (pr ? '<small class="shop-price">買いの目安：' + esc(pr.label) + " <b>" + yen(pr.price) + "円</b>以下</small>" : "") +
         (it.from ? '<small class="shop-from">' + esc(it.from) + "</small>" : "") + "</span></button></li>";
     }).join("") + "</ul></div>" +
+      (anyPrice ? '<p class="shop-note">買いの目安は、' + esc(S.prices.area) + "の平均の値段" +
+        (S.prices.month ? "（" + monthText(S.prices.month) + "）" : "") + "です。これより高ければ高め。お店や季節で変わります。" +
+        (S.prices.source ? "出典：" + esc(S.prices.source) : "") + "</p>" : "") +
       (w ? '<div class="shop-tools">' +
         (done ? '<button type="button" class="ghost" id="shop-clear-done">買ったものを消す（' + done + "）</button>" : "") +
         '<button type="button" class="ghost" id="shop-clear-all">' + (S.shopArm ? "もう一度押すと全部消します" : "全部消す") + "</button></div>" : "");
@@ -2129,18 +2185,19 @@ import { firebaseConfig } from "./config.js";
   }
 
   /* ---------- Settings: backup and restore ---------- */
-  var BACKUP_PATH = /^((notes|recipes|menus|shopping)\/[\w.~:@+-]{1,120}|meta\/categories)$/;
+  var BACKUP_PATH = /^((notes|recipes|menus|shopping)\/[\w.~:@+-]{1,120}|meta\/categories|meta\/prices)$/;
   var pendingRestore = null;
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function summaryOf(paths) {
-    var c = { notes: 0, recipes: 0, menus: 0, shopping: 0, meta: 0 };
-    paths.forEach(function (p) { var k = p.split("/")[0]; if (k in c) c[k]++; });
+    var c = { notes: 0, recipes: 0, menus: 0, shopping: 0, meta: 0, prices: 0 };
+    paths.forEach(function (p) { var k = p === "meta/prices" ? "prices" : p.split("/")[0]; if (k in c) c[k]++; });
     var parts = [];
     if (c.notes) parts.push("メモ" + c.notes + "枚");
     if (c.recipes) parts.push("レシピ" + c.recipes + "品");
     if (c.menus) parts.push("献立" + c.menus + "つ");
     if (c.shopping) parts.push("買い物リスト" + c.shopping + "品");
     if (c.meta) parts.push("分類の設定");
+    if (c.prices) parts.push("値段の目安");
     return parts.join("・");
   }
   function saveFile(name, text) {
@@ -2178,9 +2235,11 @@ import { firebaseConfig } from "./config.js";
         q.docs.forEach(function (d) { docs[c + "/" + d.id] = d.data(); });
       });
     });
-    jobs.push(db.doc("meta/categories").get().then(function (snap) {
-      if (snap.exists) docs["meta/categories"] = snap.data();
-    }));
+    ["meta/categories", "meta/prices"].forEach(function (p) {
+      jobs.push(db.doc(p).get().then(function (snap) {
+        if (snap.exists) docs[p] = snap.data();
+      }));
+    });
     Promise.all(jobs).then(function () {
       var t = new Date();
       var name = "kaji-memo-backup-" + t.getFullYear() + pad2(t.getMonth() + 1) + pad2(t.getDate()) + ".json";
@@ -2198,6 +2257,7 @@ import { firebaseConfig } from "./config.js";
     if (k[0] === "menus") return !!findBy(S.menus, k[1]);
     if (k[0] === "shopping") return !!findBy(S.shop, k[1]);
     if (path === "meta/categories") return !!S.catsDoc;
+    if (path === "meta/prices") return !!S.prices;
     return false;
   }
   // バックアップ・引っ越し・追加用の中身（文字）を確かめる。mode:"merge" なら、今あるものに書き足すだけ
@@ -2741,6 +2801,11 @@ import { firebaseConfig } from "./config.js";
       if (!snap.metadata.fromCache) S.sLoaded = true;
       render();
     }, function () { S.sLoaded = true; render(); });
+
+    db.doc("meta/prices").onSnapshot(function (s) {
+      S.prices = cleanPrices(s.exists ? s.data() : null);
+      render();
+    }, function () { /* no price guide */ });
 
     db.doc("meta/categories").onSnapshot(function (s) {
       var v = s.exists ? s.data() : null;
